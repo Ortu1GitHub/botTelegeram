@@ -28,4 +28,6 @@ public class ResultadoExamen {
         this.fecha = LocalDateTime.now();
     }
 
+    public ResultadoExamen() {
+    }
 }

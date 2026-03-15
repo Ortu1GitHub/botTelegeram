@@ -100,6 +100,9 @@ public class DrivingBot extends TelegramLongPollingBot {
             return;
         }
         switch (data) {
+            case "menu_cancelar":
+                enviarMensaje(chatId, "Has cerrado el menú principal. Escribe /start para volver a verlo.");
+                break;
             case "menu_practica":
                 iniciarPractica(chatId);
                 break;
@@ -298,6 +301,13 @@ public class DrivingBot extends TelegramLongPollingBot {
                         .build()
         ));
 
+        filas.add(Collections.singletonList(
+                InlineKeyboardButton.builder()
+                        .text("🛑 Cerrar Menú")
+                        .callbackData("menu_cancelar")
+                        .build()
+        ));
+
         if (esAdmin) {
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
@@ -432,9 +442,6 @@ public class DrivingBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
-
-
-
 
     private boolean esCategoriaValida(String cat) {
         return preguntaService.getCategorias().contains(cat);
