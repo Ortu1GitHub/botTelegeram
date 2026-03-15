@@ -1,0 +1,373 @@
+{
+  "camion" : [ {
+    "texto" : "¿Cuál es la velocidad máxima de un camión en autopista?",
+    "opciones" : [ "120 km/h", "90 km/h", "100 km/h" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué dispositivo limita la velocidad máxima de los camiones?",
+    "opciones" : [ "Limitador de velocidad", "ABS", "ESP" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "La documentación obligatoria que debe llevar un camión incluye:",
+    "opciones" : [ "Permiso de circulación y tarjeta de transporte, si procede", "Solo el seguro", "Solo el permiso de conducir" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cuál es la carga máxima autorizada para un camión rígido de dos ejes?",
+    "opciones" : [ "18 toneladas", "26 toneladas", "32 toneladas" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "El tacógrafo sirve para:",
+    "opciones" : [ "Controlar los kilómetros recorridos únicamente", "Registrar tiempos de conducción y descanso", "Indicar el consumo de combustible" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "La distancia de seguridad con un camión debe ser:",
+    "opciones" : [ "Igual que en un turismo", "Mayor que en un turismo, por el peso y la inercia", "Menor, porque los camiones frenan mejor" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa una señal con un camión dentro de un círculo rojo?",
+    "opciones" : [ "Vía reservada a camiones", "Prohibido el paso a camiones", "Obligación de circular en camión" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué elemento ayuda a frenar en descensos prolongados?",
+    "opciones" : [ "El freno motor o retardador", "Solo el freno de servicio", "El embrague" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué consecuencias tiene sobrecargar un camión?",
+    "opciones" : [ "Ninguna si no se nota en la conducción", "Aumenta la distancia de frenado y el riesgo de accidente", "Mejora la estabilidad" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa MMA?",
+    "opciones" : [ "Masa máxima autorizada", "Medida mínima admitida", "Marcha media aplicable" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué sistema evita el bloqueo de ruedas al frenar?",
+    "opciones" : [ "ESP", "ABS", "Retardador" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En una carretera convencional, ¿cuál es la velocidad máxima permitida a un camión?",
+    "opciones" : [ "90 km/h", "80 km/h", "100 km/h" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué debe comprobarse antes de iniciar un viaje en camión?",
+    "opciones" : [ "Estado de frenos, neumáticos y luces", "Solo el nivel de combustible", "Nada, si tiene la ITV pasada" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "El centro de gravedad de un camión cargado alto es:",
+    "opciones" : [ "Más bajo", "Más alto y aumenta el riesgo de vuelco", "No cambia" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué tipo de permiso es necesario para conducir un tráiler?",
+    "opciones" : [ "C1", "C", "C+E" ],
+    "respuestaCorrecta" : 2
+  }, {
+    "texto" : "En caso de accidente con un camión que transporte mercancías peligrosas, el conductor debe:",
+    "opciones" : [ "Alejarse y avisar a los servicios de emergencia", "Intentar apagar el fuego con agua siempre", "Descargar rápidamente la mercancía" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué significa un panel naranja rectangular en un camión?",
+    "opciones" : [ "Transporta mercancías peligrosas", "Tiene preferencia de paso", "Es un vehículo de gran tamaño" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué sistema ayuda a mantener la estabilidad del camión en curvas?",
+    "opciones" : [ "ABS", "ESP", "Limitador de velocidad" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Cuántas horas máximas seguidas puede conducir un camionero antes de hacer una pausa?",
+    "opciones" : [ "2 horas", "4,5 horas", "6 horas" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "La señal de “camión cuesta abajo” advierte de:",
+    "opciones" : [ "Prohibición de circular con camiones", "Pendiente peligrosa para vehículos pesados", "Obligación de usar el freno motor" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué es el tiempo de descanso diario obligatorio para un conductor profesional?",
+    "opciones" : [ "9 horas como mínimo", "6 horas", "12 horas siempre" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué debe llevar un camión que transporte mercancías peligrosas?",
+    "opciones" : [ "Paneles de identificación, equipo de protección y documentación ADR", "Solo el permiso de circulación", "Ningún documento especial" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cuál es el principal riesgo al circular con viento lateral en un camión?",
+    "opciones" : [ "Mejora el consumo", "Pérdida de estabilidad y riesgo de vuelco", "Aumenta la velocidad máxima" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En una glorieta, ¿cómo debe circular un camión largo?",
+    "opciones" : [ "Puede invadir parte del carril contiguo si es necesario", "Solo por el carril derecho sin invadir", "Siempre por el carril izquierdo" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué indica la señal de prohibición con un número dentro, situada en un puente?",
+    "opciones" : [ "Altura máxima permitida", "Peso máximo permitido", "Longitud máxima permitida" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Cuál es el efecto de una mala estiba de la carga?",
+    "opciones" : [ "Desgaste de neumáticos únicamente", "Pérdida de estabilidad y riesgo de accidente", "Ninguno" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En caso de niebla espesa, un camión debe circular con:",
+    "opciones" : [ "Luces de cruce y, si es necesario, luces antiniebla", "Luces largas", "Solo con las luces de posición" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué efecto tiene circular con neumáticos en mal estado en un camión?",
+    "opciones" : [ "Ninguno", "Riesgo de reventón y pérdida de adherencia", "Menor consumo de combustible" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué permiso permite conducir camiones pequeños de hasta 7.500 kg?",
+    "opciones" : [ "C", "C1", "C+E" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa una señal de forma circular con borde rojo y un número en toneladas?",
+    "opciones" : [ "Peso máximo autorizado", "Peso mínimo exigido", "Peso recomendado" ],
+    "respuestaCorrecta" : 0
+  } ],
+  "coche" : [ {
+    "texto" : "¿Cuál es la velocidad máxima en una autopista para un turismo?",
+    "opciones" : [ "100 km/h", "120 km/h", "110 km/h" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En caso de accidente con heridos, lo primero que debes hacer es:",
+    "opciones" : [ "Señalizar y proteger la zona.", "Trasladar a los heridos al hospital en tu coche.", "Pedir documentos a los implicados." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "En una glorieta, ¿quién tiene la prioridad de paso?",
+    "opciones" : [ "El que entra.", "El que ya circula dentro.", "Siempre el de la derecha." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa una señal triangular con un coche y dos líneas onduladas debajo?",
+    "opciones" : [ "Pavimento deslizante.", "Curva peligrosa.", "Zona de obras." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "La tasa máxima de alcohol permitida en aire espirado para un conductor novel es:",
+    "opciones" : [ "0,25 mg/l", "0,15 mg/l", "0,30 mg/l" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "Cuando en un túnel se produce un incendio y no puedes salir con el vehículo, lo correcto es:",
+    "opciones" : [ "Abandonar el vehículo, dejar las llaves puestas y dirigirse a la salida de emergencia.", "Permanecer en el vehículo con las ventanillas cerradas.", "Intentar dar marcha atrás." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué vehículo tiene prioridad en una pendiente estrecha sin señalizar?",
+    "opciones" : [ "El que baja.", "El que sube.", "El de menor tamaño." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué documentos son obligatorios llevar siempre en el coche?",
+    "opciones" : [ "Permiso de circulación y tarjeta ITV si procede.", "Solo el DNI y permiso de conducir.", "Solo el seguro del coche." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cuál es la distancia mínima obligatoria al adelantar a un ciclista en carretera?",
+    "opciones" : [ "1 metro.", "1,5 metros.", "2 metros." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa una señal azul circular con un número en blanco (ej. 50)?",
+    "opciones" : [ "Velocidad máxima obligatoria.", "Velocidad mínima obligatoria.", "Límite recomendado." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "Si conduces con niebla espesa, ¿qué luces debes utilizar?",
+    "opciones" : [ "Largas.", "Cortas y antiniebla delanteras/traseras si es necesario.", "Ninguna." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué indica una marca vial en forma de línea continua en el centro de la calzada?",
+    "opciones" : [ "Prohibido adelantar.", "Prohibido estacionar.", "Carril de uso exclusivo." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "La distancia de seguridad entre vehículos depende de:",
+    "opciones" : [ "La velocidad y las condiciones de la vía.", "El estado del vehículo únicamente.", "El número de carriles." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "En un paso de peatones regulado por semáforo en verde para vehículos y peatones cruzando…",
+    "opciones" : [ "Tienes prioridad y debes pasar.", "Debes detenerte y dejar pasar a los peatones.", "Puedes tocar el claxon para que crucen más rápido." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué puede provocar la fatiga en el conductor?",
+    "opciones" : [ "Reacción más rápida.", "Falta de concentración y aumento del tiempo de reacción.", "Mejor capacidad de atención." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significan dos líneas continuas en el centro de la calzada?",
+    "opciones" : [ "Prohibido cambiar de carril en ambos sentidos.", "Solo prohibido a camiones.", "Se puede rebasar para adelantar." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "Si un agente te da señales con el brazo levantado verticalmente, significa:",
+    "opciones" : [ "Detención obligatoria para todos los usuarios.", "Continuar marcha con precaución.", "Prioridad para vehículos pesados." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "En un carril de aceleración de autopista, la obligación del conductor es:",
+    "opciones" : [ "Incorporarse sin mirar.", "Incorporarse cediendo el paso a los que ya circulan.", "Tener prioridad sobre los vehículos de la vía principal." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué produce circular con exceso de velocidad?",
+    "opciones" : [ "Reduce la gravedad de los accidentes.", "Aumenta el tiempo y la distancia de reacción.", "Disminuye la distancia de frenado." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En un paso a nivel con barreras, ¿qué debes hacer si empiezan a bajar las barreras?",
+    "opciones" : [ "Acelerar para pasar.", "Detenerte antes de la señal.", "Tocar el claxon." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué efecto tiene conducir después de haber consumido alcohol?",
+    "opciones" : [ "Mejora la confianza y seguridad.", "Disminuye la capacidad de reacción y concentración.", "No afecta si se bebe poco." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa una señal circular blanca con borde rojo y un coche dentro?",
+    "opciones" : [ "Prohibido el paso a coches.", "Vía reservada a coches.", "Obligación de circular solo coches." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué luces debes usar al circular de noche por una carretera insuficientemente iluminada?",
+    "opciones" : [ "Luces de posición.", "Luces de carretera (largas).", "Ninguna." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "Si te encuentras un vehículo de emergencia con señales acústicas y luminosas encendidas, debes:",
+    "opciones" : [ "Continuar igual.", "Apartarte y facilitarle el paso lo antes posible.", "Frenar bruscamente." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Cuál es la velocidad máxima en una carretera convencional para turismos si tiene un arcén de más de 1,5 m?",
+    "opciones" : [ "90 km/h", "100 km/h", "80 km/h" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa un triángulo de color rojo con un tren dibujado?",
+    "opciones" : [ "Estación de tren próxima.", "Paso a nivel con barreras.", "Paso a nivel sin barreras." ],
+    "respuestaCorrecta" : 2
+  }, {
+    "texto" : "¿Cuándo se considera que un adelantamiento está prohibido?",
+    "opciones" : [ "En pasos de peatones sin semáforo.", "En autovías.", "En carreteras rectas y despejadas." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué debes hacer al estacionar en pendiente descendente?",
+    "opciones" : [ "Dejar la primera marcha puesta y girar ruedas hacia la acera.", "Punto muerto y freno de mano suelto.", "Encender las luces largas." ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cuál es el principal riesgo de conducir utilizando el móvil?",
+    "opciones" : [ "Mejora la concentración.", "Aumenta la distracción y el riesgo de accidente.", "Ninguno si se usa poco." ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "Cuando llevas un remolque ligero (menos de 750 kg), la velocidad máxima en autopista es:",
+    "opciones" : [ "120 km/h", "90 km/h", "100 km/h" ],
+    "respuestaCorrecta" : 2
+  }, {
+    "texto" : "Velocidad maxima en un parque",
+    "opciones" : [ "10", "11", "15" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "El coche Audi es de velocidad?",
+    "opciones" : [ "Si", "No", "Es peligroso" ],
+    "respuestaCorrecta" : 0
+  } ],
+  "moto" : [ {
+    "texto" : "¿Cuál es la velocidad máxima para una motocicleta en autopista?",
+    "opciones" : [ "120 km/h", "100 km/h", "90 km/h" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "El casco de protección es obligatorio en:",
+    "opciones" : [ "Solo vías interurbanas", "Todas las vías, urbanas e interurbanas", "Solo cuando se circula a más de 50 km/h" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué efecto produce llevar la presión de los neumáticos demasiado baja en una moto?",
+    "opciones" : [ "Mayor estabilidad en curvas", "Desgaste irregular y peor agarre", "Menor distancia de frenado" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué ropa es recomendable para circular en moto, además del casco?",
+    "opciones" : [ "Solo guantes y botas", "Guantes, botas, chaqueta y protecciones", "Ropa ligera para mayor comodidad" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "La tasa máxima de alcohol permitida en aire espirado para motoristas profesionales es:",
+    "opciones" : [ "0,25 mg/l", "0,15 mg/l", "0,30 mg/l" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Cuál es el principal riesgo al circular en moto con lluvia?",
+    "opciones" : [ "Mejora la visibilidad", "Menor adherencia y riesgo de aquaplaning", "Se reduce la distancia de frenado" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En un adelantamiento, la distancia lateral mínima con respecto a otros vehículos debe ser de:",
+    "opciones" : [ "1 metro", "1,5 metros", "2 metros" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué posición debe adoptar un motorista al frenar con fuerza?",
+    "opciones" : [ "Inclinar el cuerpo hacia atrás", "Inclinarse hacia delante", "Levantarse del asiento" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Cómo afecta llevar un pasajero en la moto?",
+    "opciones" : [ "No influye en la conducción", "Aumenta la distancia de frenado y modifica el equilibrio", "Mejora la estabilidad" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué significa una señal circular con fondo azul y un casco dibujado?",
+    "opciones" : [ "Prohibido circular sin casco", "Obligación de usar casco", "Recomendación de usar casco" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué luz es obligatoria llevar encendida en la moto durante el día?",
+    "opciones" : [ "Ninguna", "La de corto alcance (cruce)", "La de carretera (largas)" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Cuál es la principal causa de accidente de motoristas en ciudad?",
+    "opciones" : [ "Exceso de velocidad", "Alcances y giros indebidos de otros vehículos", "El estado de la moto" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En una moto, el freno delantero actúa sobre:",
+    "opciones" : [ "La rueda trasera", "La rueda delantera", "Ambas ruedas a la vez" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "La ropa reflectante en moto es:",
+    "opciones" : [ "Obligatoria de noche", "Obligatoria en vías interurbanas siempre", "Recomendable para ser más visible" ],
+    "respuestaCorrecta" : 2
+  }, {
+    "texto" : "En un paso de peatones sin semáforo, un motorista debe:",
+    "opciones" : [ "Detenerse y ceder el paso a los peatones", "Pasar rápidamente", "Tocar el claxon" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cuál es el riesgo de circular con el casco mal abrochado?",
+    "opciones" : [ "No protege adecuadamente en caso de caída", "Solo molesta al conducir", "Ninguno" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué puede suceder si tomas una curva demasiado rápido en moto?",
+    "opciones" : [ "Nada, la moto se adapta", "Puedes invadir el carril contrario o salirte de la calzada", "La moto frena automáticamente" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué sistema reduce el riesgo de bloqueo en las ruedas al frenar en moto?",
+    "opciones" : [ "ABS", "ESP", "Control de crucero" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué produce la fatiga en la conducción de moto?",
+    "opciones" : [ "Aumenta la atención", "Aumenta el tiempo de reacción y reduce la concentración", "Reduce la necesidad de descanso" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En carreteras convencionales, ¿cuál es la velocidad máxima general para motocicletas?",
+    "opciones" : [ "100 km/h", "90 km/h", "80 km/h" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué significa una señal triangular con una moto dibujada dentro?",
+    "opciones" : [ "Peligro por presencia frecuente de motocicletas", "Prohibición de paso a motos", "Vía reservada a motos" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cómo se debe circular en un túnel con una moto?",
+    "opciones" : [ "Con las luces apagadas", "Con las luces encendidas y manteniendo distancia de seguridad", "A mayor velocidad para salir rápido" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "En caso de viento lateral fuerte, el motorista debe:",
+    "opciones" : [ "Inclinar la moto en dirección contraria al viento", "Acelerar para contrarrestar", "No modificar la postura" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "Si llevas un pasajero en moto, ¿qué debe hacer este?",
+    "opciones" : [ "Mantenerse pegado al conductor y seguir sus movimientos", "Inclinarse al lado contrario de la curva", "Sujetarse con las piernas y mirar al suelo" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Cuál es el riesgo de circular con neumáticos desgastados en una moto?",
+    "opciones" : [ "Ninguno", "Pérdida de adherencia y mayor riesgo de accidente", "Menor consumo de combustible" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Dónde debe colocarse el equipaje en la moto?",
+    "opciones" : [ "En cualquier parte", "De forma equilibrada y bien sujeta", "Solo en el manillar" ],
+    "respuestaCorrecta" : 1
+  }, {
+    "texto" : "¿Qué maniobra está prohibida en túneles con una moto?",
+    "opciones" : [ "Parar y dar marcha atrás", "Adelantar con precaución", "Usar luces de cruce" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué debes hacer al aproximarte a un paso a nivel sin barreras?",
+    "opciones" : [ "Reducir la velocidad y asegurarte de que no viene ningún tren", "Pasar lo más rápido posible", "Detenerte siempre aunque no venga un tren" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué influye en la distancia de frenado de una moto?",
+    "opciones" : [ "La velocidad, el estado de la calzada y de los neumáticos", "Solo la velocidad", "Solo el peso del conductor" ],
+    "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿Qué significa que una señal vertical sea de color circular y fondo rojo?",
+    "opciones" : [ "Prohibición o restricción", "Obligación", "Información" ],
+    "respuestaCorrecta" : 0
+  }]
+}
