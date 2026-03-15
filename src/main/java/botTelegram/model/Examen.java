@@ -38,8 +38,6 @@ public class Examen {
         indiceActual++;
     }
 
-
-
     public int getAciertos() {
         int count = 0;
         for (Boolean b : respuestasCorrectas.values()) if (Boolean.TRUE.equals(b)) count++;
@@ -55,8 +53,6 @@ public class Examen {
     public int getIndiceActual() { return indiceActual; }
     public void setIndiceActual(int indice) { this.indiceActual = indice; }
     public int totalPreguntas() { return preguntas.size(); }
-    public LocalDateTime getInicio() { return inicio; }
-    public Map<Integer, Integer> getRespuestasUsuario() { return respuestasUsuario; }
 
     public long tiempoRestanteSegundos(int duracionMinutos) {
         Duration duracion = Duration.between(inicio, LocalDateTime.now());

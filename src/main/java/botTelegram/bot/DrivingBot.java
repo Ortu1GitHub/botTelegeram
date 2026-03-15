@@ -49,17 +49,15 @@ public class DrivingBot extends TelegramLongPollingBot {
     private final Map<Long, Timer> timersExamen = new ConcurrentHashMap<>();
 
     private static final int DURACION_MINUTOS_EXAMEN = 40;
-    private static final int CANTIDAD_PREGUNTAS_EXAMEN = 30; // solo para examen final
+    private static final int CANTIDAD_PREGUNTAS_EXAMEN = 30;
     private static final int UMBRAL_APROBADO = 26;
     private static final String RUTA_JSON = "C:\\botTelegram (1)\\botTelegram\\botTelegram\\src\\main\\java\\botTelegram\\recursos";
 
     // Literales para evitar duplicados
     private static final String SOLO_ADMIN = "❌ Solo los administradores pueden usar esta opción.";
-    // ...existing code...
     private static final String SOLO_JSON = "⚠️ Solo se permiten archivos con extensión .json";
     private static final String ARCHIVO_JSON_OK = "✅ Archivo JSON recibido y reemplazado con éxito.";
     private static final String ERROR_JSON = "❌ Error al procesar el archivo JSON.";
-
 
     @Value("${telegram.bot.username}")
     private String botUsername;
@@ -121,7 +119,7 @@ public class DrivingBot extends TelegramLongPollingBot {
             case "menu_crear_pregunta":
                 if (esAdmin) {
                     asistentes.put(chatId, new EstadoCreacionPregunta());
-                    enviarMensaje(chatId, "Ingresa la categoría de la pregunta (ejemplo: camion,coche,moto):");
+                    enviarMensaje(chatId, "Indica la categoría de la pregunta (ejemplo: camion,coche,moto):");
                 } else {
                     enviarMensaje(chatId, SOLO_ADMIN);
                 }
@@ -274,8 +272,6 @@ public class DrivingBot extends TelegramLongPollingBot {
             enviarMensaje(chatId, "Ingresa un índice válido (1, 2 o 3) o escribe 'salir'.");
         }
     }
-
-
 
     private void enviarMenuPrincipal(long chatId) {
         @SuppressWarnings("null")
@@ -443,10 +439,6 @@ public class DrivingBot extends TelegramLongPollingBot {
     private boolean esCategoriaValida(String cat) {
         return preguntaService.getCategorias().contains(cat);
     }
-
-
-
-//
 
     // 4️⃣ iniciarExamenFinal: revisión compatibilidad con categorías
     private void iniciarExamenFinal(long chatId, String categoria) {

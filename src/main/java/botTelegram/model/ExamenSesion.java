@@ -15,14 +15,10 @@ public class ExamenSesion {
     @ManyToOne
     private Usuario usuario;
 
-    // Campos eliminados por no ser usados
-
     @OneToMany(mappedBy = "examenSesion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RespuestaExamen> respuestas = new ArrayList<>();
 
     public ExamenSesion() {
         // Constructor vacío requerido por JPA
     }
-
-
 }

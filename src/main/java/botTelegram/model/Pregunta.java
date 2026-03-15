@@ -1,12 +1,10 @@
 package botTelegram.model;
 
-
-// ...existing code...
-
-
+import lombok.Getter;
 
 import java.util.List;
 
+@Getter
 public class Pregunta {
     private String texto;
     private List<String> opciones;
@@ -20,10 +18,5 @@ public class Pregunta {
         this.respuestaCorrecta = respuestaCorrecta;
     }
 
-    public String getTexto() { return texto; }
 
-
-    public List<String> getOpciones() { return opciones; }
-
-    public int getRespuestaCorrecta() { return respuestaCorrecta; }
 }
