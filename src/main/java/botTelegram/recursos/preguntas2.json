@@ -1,5 +1,5 @@
 {
-  "camion1" : [ {
+  "camion" : [ {
     "texto" : "¿Cuál es la velocidad máxima de un camión en autopista?",
     "opciones" : [ "120 km/h", "90 km/h", "100 km/h" ],
     "respuestaCorrecta" : 1

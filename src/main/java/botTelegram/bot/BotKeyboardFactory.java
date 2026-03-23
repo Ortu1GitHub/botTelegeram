@@ -9,6 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class BotKeyboardFactory {
 
@@ -30,7 +31,7 @@ public class BotKeyboardFactory {
         ));
         filas.add(Collections.singletonList(
                 InlineKeyboardButton.builder()
-                        .text("🛑 Cerrar Menú")
+                        .text("🛑 Cerrar Bot")
                         .callbackData("menu_cancelar")
                         .build()
         ));
@@ -81,5 +82,20 @@ public class BotKeyboardFactory {
 
         teclado.setKeyboard(filas);
         return teclado;
+    }
+
+    public static InlineKeyboardMarkup crearTecladoCategorias(Set<String> categorias, String prefix) {
+        List<List<InlineKeyboardButton>> filas = new ArrayList<>();
+
+        for (String cat : categorias) {
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text(cat.toUpperCase()) // Ejemplo: "COCHE"
+                            .callbackData(prefix + cat) // Ejemplo: "practica_cat_coche"
+                            .build()
+            ));
+        }
+
+        return new InlineKeyboardMarkup(filas);
     }
 }

@@ -110,7 +110,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         boolean esAdmin = (u != null && u.isAdmin())
                 || String.valueOf(chatId).equals(adminIdConfigured);
 
-        // Lógica de categorías de examen
+        // 1. Lógica de categorías para EXAMEN FINAL
         final String EXAMEN_CATEGORIA_PREFIX = "examen_categoria_";
         if (data.startsWith(EXAMEN_CATEGORIA_PREFIX)) {
             String categoria = data.substring(EXAMEN_CATEGORIA_PREFIX.length());
@@ -118,13 +118,21 @@ public class DrivingBot extends TelegramLongPollingBot {
             return;
         }
 
+        // 2. NUEVA LÓGICA: Categorías para MODO PRÁCTICA
+        final String PRACTICA_CATEGORIA_PREFIX = "practica_cat_";
+        if (data.startsWith(PRACTICA_CATEGORIA_PREFIX)) {
+            String categoria = data.substring(PRACTICA_CATEGORIA_PREFIX.length());
+            iniciarPracticaPorCategoria(chatId, categoria);
+            return;
+        }
+
         // Procesar acciones del menú
         switch (data) {
             case "menu_cancelar":
-                enviarMensaje(chatId, "Has cerrado el menú principal. Escribe /start para volver a verlo.");
+                enviarMensaje(chatId, "Has cerrado el bot. Escribe /start para arrancarlo.");
                 break;
             case "menu_practica":
-                iniciarPractica(chatId);
+                mostrarCategoriasPractica(chatId);
                 break;
             case "menu_examen":
                 mostrarCategoriasExamen(chatId);
@@ -187,8 +195,11 @@ public class DrivingBot extends TelegramLongPollingBot {
     }
 
     private void manejarArchivo(long chatId, Document document) {
+        // 1. Verificación de extensión
         if (!document.getFileName().endsWith(".json")) {
             enviarMensaje(chatId, SOLO_JSON);
+            // Volvemos al menú si el archivo no es un JSON
+            enviarMenuPrincipal(chatId);
             return;
         }
 
@@ -198,25 +209,22 @@ public class DrivingBot extends TelegramLongPollingBot {
             org.telegram.telegrambots.meta.api.objects.File file = execute(getFile);
             String fileUrl = file.getFileUrl(getBotToken());
 
-            // Descargar el contenido del JSON a una cadena (String) para validarlo
+            // Descargar el contenido del JSON
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(fileUrl)).build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String nuevoJson = response.body();
 
-            // VALIDACIÓN CRÍTICA: Intentar parsear el JSON antes de guardarlo
-            // Si el JSON es inválido, Jackson lanzará una excepción aquí y saltará al catch
+            // 2. VALIDACIÓN CRÍTICA
             if (preguntaService.validarEstructuraJson(nuevoJson)) {
-
-                // Si es válido, lo guardamos físicamente en la ruta configurada
+                // Guardado físico
                 try (FileOutputStream outputStream = new FileOutputStream(rutaJson)) {
                     outputStream.write(nuevoJson.getBytes());
                 }
 
-                // Recargamos la memoria del servicio y avisamos al usuario
+                // Recarga de memoria
                 preguntaService.cargarPreguntas();
                 enviarMensaje(chatId, ARCHIVO_JSON_OK);
-
             } else {
                 enviarMensaje(chatId, "❌ El archivo JSON está vacío o no tiene el formato esperado.");
             }
@@ -225,8 +233,10 @@ public class DrivingBot extends TelegramLongPollingBot {
             Thread.currentThread().interrupt();
             enviarMensaje(chatId, ERROR_JSON);
         } catch (Exception ex) {
-            // Si el error fue por un JSON mal formado, podemos dar un mensaje más específico
             enviarMensaje(chatId, "❌ Error de formato: Asegúrate de que el JSON sea válido (revisa comas y llaves).");
+        } finally {
+            // Volver al menu principal en caso de exito/error
+            enviarMenuPrincipal(chatId);
         }
     }
 
@@ -301,7 +311,9 @@ public class DrivingBot extends TelegramLongPollingBot {
                 preguntaService.agregarPregunta(cat, p);
             }
             asistentes.remove(chatId);
-            enviarMensaje(chatId, "✅ Pregunta agregada y guardada en JSON.");
+            enviarMensaje(chatId, "✅ Pregunta agregada y guardada en el archivo JSON.");
+            // Volver a mostrar el menú principal automáticamente
+            enviarMenuPrincipal(chatId);
         } catch (NumberFormatException e) {
             enviarMensaje(chatId, "Ingresa un índice válido (1, 2 o 3) o escribe 'salir'.");
         }
@@ -328,21 +340,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
     }
 
-    private void iniciarPractica(long chatId) {
-        List<Pregunta> preguntas = preguntaService.getTodasLasPreguntas();
-        if (preguntas.isEmpty()) {
-            enviarMensaje(chatId, "No hay preguntas disponibles para practicar.");
-            return;
-        }
-
-        Collections.shuffle(preguntas);
-        Examen practica = new Examen(preguntas);
-        practicasActivas.put(chatId, practica);
-
-        enviarPreguntaPractica(chatId, practica);
-    }
-
-
     private void enviarPreguntaPractica(long chatId, Examen practica) {
         Pregunta p = practica.getPreguntaActual();
         if (p == null) {
@@ -358,7 +355,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         for (int i = 0; i < p.getOpciones().size(); i++) {
             sb.append(i + 1).append(". ").append(p.getOpciones().get(i)).append("\n");
         }
-        sb.append("\n👉 Para *terminar la práctica*, escribe o pulsa: 'Fin'");
+        sb.append("\n👉 Para terminar la práctica, escribe o pulsa: **Fin**");
 
         SendMessage mensaje = new SendMessage(String.valueOf(chatId), sb.toString());
         mensaje.setParseMode("Markdown");
@@ -376,23 +373,64 @@ public class DrivingBot extends TelegramLongPollingBot {
 
 
     private void procesarRespuestaPractica(long chatId, String mensaje) {
+        // 1. Recuperar la sesión de práctica actual
         Examen practica = practicasActivas.get(chatId);
+        if (practica == null) return;
 
-        if (mensaje.equalsIgnoreCase("Fin")) {
+        String msg = mensaje.trim();
+
+        // 2. CASO: El usuario decide terminar manualmente escribiendo o pulsando "Fin"
+        if (msg.equalsIgnoreCase("Fin")) {
+            int aciertos = practica.getAciertos();
+            int errores = practica.getErrores();
+            // Preguntas intentadas hasta el momento
+            int total = practica.getIndiceActual();
+
+            // Limpiamos la sesión
             practicasActivas.remove(chatId);
-            enviarMensaje(chatId, "✅ Has terminado la práctica.\nAciertos: " + practica.getAciertos() + ", Errores: " + practica.getErrores());
+
+            // Enviamos resumen y volvemos al menú
+            enviarMensaje(chatId, "✅ *Práctica finalizada*\n\n" +
+                    "He finalizado tu sesión de estudio.\n" +
+                    "✔️ Aciertos: " + aciertos + "\n" +
+                    "❌ Errores: " + errores + "\n" +
+                    "Total contestadas: " + total);
+
+            enviarMenuPrincipal(chatId);
             return;
         }
 
+        // 3. CASO: El usuario responde a una pregunta (numérico)
         try {
-            int opcion = Integer.parseInt(mensaje) - 1;
-            practica.responderPregunta(opcion);
-            boolean ultimaCorrecta = Boolean.TRUE.equals(practica.getUltimaRespuestaCorrecta());
-            enviarMensaje(chatId, ultimaCorrecta ? "✅ Correcto" : "❌ Incorrecto");
+            int opcion = Integer.parseInt(msg) - 1;
+
+            // Validar que la opción existe en la pregunta actual
+            Pregunta pActual = practica.getPreguntaActual();
+            if (pActual == null || opcion < 0 || opcion >= pActual.getOpciones().size()) {
+                enviarMensaje(chatId, "⚠️ Por favor, elige un número de opción válido o escribe 'Fin'.");
+                return;
+            }
+
+            // Registrar respuesta y dar feedback inmediato
+            boolean correcta = practica.responderPregunta(opcion);
+            if (correcta) {
+                enviarMensaje(chatId, "✅ *¡Correcto!*");
+            } else {
+                // Opcional: Mostrar cuál era la correcta
+                int indiceCorrecto = pActual.getRespuestaCorrecta() + 1;
+                enviarMensaje(chatId, "❌ *Incorrecto*\nLa respuesta correcta era la: " + indiceCorrecto);
+            }
+
+            // Avanzar a la siguiente pregunta
             practica.siguientePregunta();
+
+            // Llamamos a enviarPreguntaPractica para mostrar la siguiente o terminar si era la última
             enviarPreguntaPractica(chatId, practica);
-        } catch (NumberFormatException ignored) {
-            enviarMensaje(chatId, "Selecciona el número de la opción o escribe 'Terminar práctica' o 'Fin'.");
+
+        } catch (NumberFormatException e) {
+            // Si el usuario escribe cualquier otra cosa que no sea número o "Fin"
+            enviarMensaje(chatId, "⌨️ Usa los botones del teclado o escribe el número de la respuesta.\n" +
+                    "Para salir, escribe 'Fin'.");
         }
     }
 
@@ -413,6 +451,7 @@ public class DrivingBot extends TelegramLongPollingBot {
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
                             .text(cat)
+                            .text(cat.toUpperCase())
                             .callbackData("examen_categoria_" + cat)
                             .build()
             ));
@@ -473,15 +512,18 @@ public class DrivingBot extends TelegramLongPollingBot {
             sb.append(i + 1).append(". ").append(p.getOpciones().get(i)).append("\n");
         }
 
+
         long minRestantes = examen.tiempoRestanteSegundos(DURACION_MINUTOS_EXAMEN) / 60;
         sb.append("\n⏱ Tiempo restante: ").append(minRestantes).append(" minutos");
-        sb.append("\n👉 Para *terminar el examen*, pulsa: 'Fin'");
+        sb.append("\n👉 Para terminar el examen, pulsa: **Fin**");
+        //sb.append("\n👉 Para terminar el examen, pulsa: **Fin**");
 
         // 2. Configuración del mensaje
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));
         mensaje.setText(sb.toString());
-        mensaje.setParseMode("Markdown"); // Para que las negritas funcionen
+        // Para que las negritas funcionen
+        mensaje.setParseMode("MarkdownV2");
 
         // 3. ASIGNAR EL TECLADO (Llamada a la Factoría)
         mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoExamen(p.getOpciones().size()));
@@ -567,6 +609,8 @@ public class DrivingBot extends TelegramLongPollingBot {
         String mensaje = estadisticaService.generarEstadisticas(chatIdStr);
 
         enviarMensaje(chatId, mensaje);
+        // Volver a mostrar el menú principal inmediatamente después
+        enviarMenuPrincipal(chatId);
     }
 
 
@@ -576,6 +620,53 @@ public class DrivingBot extends TelegramLongPollingBot {
         mensaje.setText(texto);
         try { execute(mensaje); } catch (TelegramApiException e) { e.printStackTrace(); }
     }
+
+    // --- NUEVOS MÉTODOS PARA PRÁCTICA POR CATEGORÍA ---
+
+    private void mostrarCategoriasPractica(long chatId) {
+        List<String> categorias = new ArrayList<>(preguntaService.getCategorias());
+        if (categorias.isEmpty()) {
+            enviarMensaje(chatId, "⚠️ No hay categorías disponibles para practicar.");
+            return;
+        }
+
+        SendMessage mensaje = new SendMessage();
+        mensaje.setChatId(String.valueOf(chatId));
+        mensaje.setText("🛒 Selecciona qué categoría quieres practicar:");
+
+        List<List<InlineKeyboardButton>> filas = new ArrayList<>();
+        for (String cat : categorias) {
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text(cat.toUpperCase())
+                            .callbackData("practica_cat_" + cat)
+                            .build()
+            ));
+        }
+
+        mensaje.setReplyMarkup(new InlineKeyboardMarkup(filas));
+        try {
+            execute(mensaje);
+        } catch (TelegramApiException e) { e.printStackTrace(); }
+    }
+
+    private void iniciarPracticaPorCategoria(long chatId, String categoria) {
+        // Obtenemos todas las preguntas de esa categoría específica
+        List<Pregunta> preguntas = preguntaService.getPreguntasExamen(categoria, 100);
+
+        if (preguntas.isEmpty()) {
+            enviarMensaje(chatId, "No hay preguntas en la categoría: " + categoria);
+            return;
+        }
+
+        Collections.shuffle(preguntas);
+        Examen practica = new Examen(preguntas);
+        practicasActivas.put(chatId, practica);
+
+        enviarMensaje(chatId, "🚀 Iniciando práctica de: " + categoria.toUpperCase());
+        enviarPreguntaPractica(chatId, practica);
+    }
+
 
     @Override
     public String getBotUsername() { return botUsername; }
