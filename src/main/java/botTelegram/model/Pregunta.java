@@ -16,5 +16,7 @@ public class Pregunta {
         this.respuestaCorrecta = respuestaCorrecta;
     }
 
-
+    // Jackson necesita obligatoriamente este constructor vacío
+    public Pregunta() {
+    }
 }
