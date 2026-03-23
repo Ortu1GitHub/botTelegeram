@@ -10,6 +10,8 @@ public class Pregunta {
     private List<String> opciones;
     private int respuestaCorrecta;
 
+    public Pregunta() {}
+
     public Pregunta(String texto, List<String> opciones, int respuestaCorrecta) {
         this.texto = texto;
         this.opciones = opciones;

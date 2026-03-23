@@ -14,4 +14,8 @@ public class RespuestaExamen {
 
     @Column(columnDefinition = "TEXT")
     private String preguntaTexto;
+
+    public RespuestaExamen() {}
+
+
 }

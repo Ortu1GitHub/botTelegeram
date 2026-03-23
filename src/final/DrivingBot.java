@@ -7,7 +7,6 @@ import botTelegram.model.Usuario;
 import botTelegram.repository.UsuarioRepository;
 import botTelegram.service.EstadisticaService;
 import botTelegram.service.PreguntaServiceImple;
-import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -90,13 +89,13 @@ public class DrivingBot extends TelegramLongPollingBot {
         manejarMensaje(update.getMessage());
     }
 
-    private void manejarCallback(@Nonnull Update update) {
-        // Extraer datos necesarios del CallbackQuery
+    private void manejarCallback(Update update) {
+        // 1. Extraer datos necesarios del CallbackQuery
         String callbackQueryId = update.getCallbackQuery().getId();
         String data = update.getCallbackQuery().getData();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-        // Notificar a Telegram que hemos recibido el clic.
+        // 2. CRUCIAL: Notificar a Telegram que hemos recibido el clic.
         // Esto quita el icono de carga del botón inmediatamente.
         try {
             execute(new org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery(callbackQueryId));
@@ -104,13 +103,13 @@ public class DrivingBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
 
-        //Determinar si el usuario es administrador (BD o Configuración)
+        // 3. Determinar si el usuario es administrador (BD o Configuración)
         @SuppressWarnings("null")
         Usuario u = usuarioRepo.findById(String.valueOf(chatId)).orElse(null);
-        boolean esAdmin = (u != null && u.isAdmin())
+        boolean esAdmin = (u != null && Boolean.TRUE.equals(u.isAdmin()))
                 || String.valueOf(chatId).equals(adminIdConfigured);
 
-        // Lógica de categorías de examen
+        // 4. Lógica de categorías de examen
         final String EXAMEN_CATEGORIA_PREFIX = "examen_categoria_";
         if (data.startsWith(EXAMEN_CATEGORIA_PREFIX)) {
             String categoria = data.substring(EXAMEN_CATEGORIA_PREFIX.length());
@@ -118,7 +117,7 @@ public class DrivingBot extends TelegramLongPollingBot {
             return;
         }
 
-        // Procesar acciones del menú
+        // 5. Procesar acciones del menú
         switch (data) {
             case "menu_cancelar":
                 enviarMensaje(chatId, "Has cerrado el menú principal. Escribe /start para volver a verlo.");
@@ -193,27 +192,27 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
 
         try {
-            // Obtener la URL de descarga desde Telegram
+            // 1. Obtener la URL de descarga desde Telegram
             GetFile getFile = new GetFile(document.getFileId());
             org.telegram.telegrambots.meta.api.objects.File file = execute(getFile);
             String fileUrl = file.getFileUrl(getBotToken());
 
-            // Descargar el contenido del JSON a una cadena (String) para validarlo
+            // 2. Descargar el contenido del JSON a una cadena (String) para validarlo
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder().uri(URI.create(fileUrl)).build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             String nuevoJson = response.body();
 
-            // VALIDACIÓN CRÍTICA: Intentar parsear el JSON antes de guardarlo
+            // 3. VALIDACIÓN CRÍTICA: Intentar parsear el JSON antes de guardarlo
             // Si el JSON es inválido, Jackson lanzará una excepción aquí y saltará al catch
             if (preguntaService.validarEstructuraJson(nuevoJson)) {
 
-                // Si es válido, lo guardamos físicamente en la ruta configurada
+                // 4. Si es válido, lo guardamos físicamente en la ruta configurada
                 try (FileOutputStream outputStream = new FileOutputStream(rutaJson)) {
                     outputStream.write(nuevoJson.getBytes());
                 }
 
-                // Recargamos la memoria del servicio y avisamos al usuario
+                // 5. Recargamos la memoria del servicio y avisamos al usuario
                 preguntaService.cargarPreguntas();
                 enviarMensaje(chatId, ARCHIVO_JSON_OK);
 
@@ -308,25 +307,28 @@ public class DrivingBot extends TelegramLongPollingBot {
     }
 
     private void enviarMenuPrincipal(long chatId) {
-        //  Obtener datos (Usamos el repositorio que ya es un atributo de la CLASE)
+        // 1. Obtener datos (Usamos el repositorio que ya es un atributo de la CLASE)
+        // Asegúrate de usar el nombre exacto del atributo definido arriba (ej: usuarioRepo)
         Usuario u = usuarioRepo.findById(String.valueOf(chatId)).orElse(null);
-        boolean esAdmin = (u != null && u.isAdmin()) || String.valueOf(chatId).equals(adminIdConfigured);
+        boolean esAdmin = (u != null && u.isAdmin());
 
-        // Configurar el mensaje
+        // 2. Configurar el mensaje
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));
         mensaje.setText("👋 Bienvenido. Elige una opción:");
 
-        // Asignar teclado (Usando la Factoría)
+        // 3. ASIGNAR EL TECLADO (Usando la Factoría)
         mensaje.setReplyMarkup(BotKeyboardFactory.crearMenuPrincipalInline(esAdmin));
 
-        // Intentar envío
+        // 4. Intentar envío
         try {
             execute(mensaje);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
     }
+
+
 
     private void iniciarPractica(long chatId) {
         List<Pregunta> preguntas = preguntaService.getTodasLasPreguntas();
@@ -363,7 +365,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         SendMessage mensaje = new SendMessage(String.valueOf(chatId), sb.toString());
         mensaje.setParseMode("Markdown");
 
-        // Usamos la factoría que ya creamos para el examen
+        // MEJORA: Usamos la factoría que ya creamos para el examen
         // Como el teclado de examen ya tiene los números y el botón 'Fin', nos sirve perfectamente
         mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoExamen(p.getOpciones().size()));
 
@@ -570,6 +572,7 @@ public class DrivingBot extends TelegramLongPollingBot {
     }
 
 
+    // Utilidades
     private void enviarMensaje(long chatId, String texto) {
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));

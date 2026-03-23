@@ -1,0 +1,5 @@
+{"properties": [{
+  "name": "preguntas.archivo.ruta",
+  "type": "java.lang.String",
+  "description": "A description for 'preguntas.archivo.ruta'"
+}]}
