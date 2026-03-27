@@ -37,11 +37,14 @@ public class EstadisticaService {
         LocalDateTime inicio = hoy.atStartOfDay();
         LocalDateTime fin = hoy.atTime(LocalTime.MAX);
 
+        // Consultas para el total global de hoy
         long examenesHoy = repo.countByFechaBetween(inicio, fin);
+        long aprobadosHoy = repo.countByFechaBetweenAndAprobadoTrue(inicio, fin);
 
         return "📊 Tus estadísticas:\n" +
                 "📝 Exámenes realizados: " + totalExamenesUsuario + "\n" +
                 "✅ Exámenes aprobados: " + aprobadosUsuario + "\n\n" +
-                "📅 Hoy se realizaron en total: " + examenesHoy + " exámenes";
+               // "📅 Hoy se realizaron en total: " + examenesHoy + " exámenes";
+                "📅 Hoy se realizaron: " + examenesHoy + " exámenes (" + aprobadosHoy + " aprobados)";
     }
 }

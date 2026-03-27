@@ -10,4 +10,6 @@ public interface ResultadoExamenRepository extends JpaRepository<ResultadoExamen
     List<ResultadoExamen> findByUsuarioId(String usuarioId);
     long countByUsuarioIdAndAprobadoTrue(String usuarioId);
     long countByFechaBetween(LocalDateTime desde, LocalDateTime hasta);
+
+    long countByFechaBetweenAndAprobadoTrue(LocalDateTime inicio, LocalDateTime fin);
 }
