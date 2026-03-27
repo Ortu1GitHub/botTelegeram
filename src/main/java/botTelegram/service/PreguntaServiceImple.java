@@ -72,11 +72,6 @@ public class PreguntaServiceImple {
         return copia.subList(0, Math.min(cantidad, copia.size()));
     }
 
-    public List<Pregunta> getTodasLasPreguntas() {
-        List<Pregunta> todas = new ArrayList<>();
-        for (List<Pregunta> lista : preguntasPorCategoria.values()) todas.addAll(lista);
-        return todas;
-    }
 
     public Set<String> getCategorias() {
         return preguntasPorCategoria.keySet();

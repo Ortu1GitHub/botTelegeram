@@ -1,5 +1,5 @@
 {
-  "camion1" : [ {
+  "camion" : [ {
     "texto" : "¿Cuál es la velocidad máxima de un camión en autopista?",
     "opciones" : [ "120 km/h", "90 km/h", "100 km/h" ],
     "respuestaCorrecta" : 1
@@ -119,6 +119,10 @@
     "texto" : "¿Qué significa una señal de forma circular con borde rojo y un número en toneladas?",
     "opciones" : [ "Peso máximo autorizado", "Peso mínimo exigido", "Peso recomendado" ],
     "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿ Que superheroe es el mejor ?",
+    "opciones" : [ "batman", "robin", "Aquaman" ],
+    "respuestaCorrecta" : 2
   } ],
   "coche" : [ {
     "texto" : "¿Cuál es la velocidad máxima en una autopista para un turismo?",

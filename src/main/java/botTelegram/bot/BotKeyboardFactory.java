@@ -83,19 +83,4 @@ public class BotKeyboardFactory {
         teclado.setKeyboard(filas);
         return teclado;
     }
-
-    public static InlineKeyboardMarkup crearTecladoCategorias(Set<String> categorias, String prefix) {
-        List<List<InlineKeyboardButton>> filas = new ArrayList<>();
-
-        for (String cat : categorias) {
-            filas.add(Collections.singletonList(
-                    InlineKeyboardButton.builder()
-                            .text(cat.toUpperCase()) // Ejemplo: "COCHE"
-                            .callbackData(prefix + cat) // Ejemplo: "practica_cat_coche"
-                            .build()
-            ));
-        }
-
-        return new InlineKeyboardMarkup(filas);
-    }
 }

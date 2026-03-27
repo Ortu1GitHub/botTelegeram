@@ -523,7 +523,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         mensaje.setChatId(String.valueOf(chatId));
         mensaje.setText(sb.toString());
         // Para que las negritas funcionen
-        mensaje.setParseMode("MarkdownV2");
+        mensaje.setParseMode("Markdown");
 
         // 3. ASIGNAR EL TECLADO (Llamada a la Factoría)
         mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoExamen(p.getOpciones().size()));
