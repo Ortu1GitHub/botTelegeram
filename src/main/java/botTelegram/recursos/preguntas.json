@@ -123,6 +123,10 @@
     "texto" : "¿ Que superheroe es el mejor ?",
     "opciones" : [ "batman", "robin", "Aquaman" ],
     "respuestaCorrecta" : 2
+  }, {
+    "texto" : "¿ Hola ?",
+    "opciones" : [ "Si", "No", "Tal vez" ],
+    "respuestaCorrecta" : 0
   } ],
   "coche" : [ {
     "texto" : "¿Cuál es la velocidad máxima en una autopista para un turismo?",
@@ -252,6 +256,10 @@
     "texto" : "El coche Audi es de velocidad?",
     "opciones" : [ "Si", "No", "Es peligroso" ],
     "respuestaCorrecta" : 0
+  }, {
+    "texto" : "¿ Que ?",
+    "opciones" : [ "1", "2", "3" ],
+    "respuestaCorrecta" : 2
   } ],
   "moto" : [ {
     "texto" : "¿Cuál es la velocidad máxima para una motocicleta en autopista?",

@@ -91,46 +91,152 @@ public class DrivingBot extends TelegramLongPollingBot {
     }
 
     private void manejarCallback(@Nonnull Update update) {
-        // Extraer datos necesarios del CallbackQuery
         String callbackQueryId = update.getCallbackQuery().getId();
         String data = update.getCallbackQuery().getData();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-        // Notificar a Telegram que hemos recibido el clic.
-        // Esto quita el icono de carga del botón inmediatamente.
+        // Notificar a Telegram que el callback ha sido recibido
         try {
             execute(new org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery(callbackQueryId));
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
 
-        //Determinar si el usuario es administrador (BD o Configuración)
-        @SuppressWarnings("null")
         Usuario u = usuarioRepo.findById(String.valueOf(chatId)).orElse(null);
-        boolean esAdmin = (u != null && u.isAdmin())
-                || String.valueOf(chatId).equals(adminIdConfigured);
+        // Corregido: usamos u.isAdmin() asumiendo que ya arreglaste el return false en la entidad Usuario
+        boolean esAdmin = (u != null && u.isAdmin()) || String.valueOf(chatId).equals(adminIdConfigured);
 
-        // 1. Lógica de categorías para EXAMEN FINAL
-        final String EXAMEN_CATEGORIA_PREFIX = "examen_categoria_";
-        if (data.startsWith(EXAMEN_CATEGORIA_PREFIX)) {
-            String categoria = data.substring(EXAMEN_CATEGORIA_PREFIX.length());
-            iniciarExamenFinal(chatId, categoria);
+        // --- 1. LÓGICA DE NAVEGACIÓN (FLECHAS Y FINALIZACIÓN) ---
+        if (data.contains("_nav_")) {
+            boolean esModoExamen = data.startsWith("examen");
+            Examen sesion = esModoExamen ? examenesActivos.get(chatId) : practicasActivas.get(chatId);
+
+            if (sesion != null) {
+                if (data.endsWith("_retro")) {
+                    if (sesion.getIndiceActual() > 0) {
+                        sesion.setIndiceActual(sesion.getIndiceActual() - 1);
+                        if (esModoExamen) enviarPreguntaExamen(chatId, sesion);
+                        else enviarPreguntaPractica(chatId, sesion);
+                    }
+                }
+                else if (data.endsWith("_sig")) {
+                    if (sesion.getIndiceActual() < sesion.totalPreguntas() - 1) {
+                        sesion.siguientePregunta();
+                        if (esModoExamen) enviarPreguntaExamen(chatId, sesion);
+                        else enviarPreguntaPractica(chatId, sesion);
+                    }
+                }
+                else if (data.endsWith("_fin")) {
+                    if (esModoExamen) {
+                        finalizarYGuardarExamen(chatId, sesion, "🏁 Has finalizado el examen manualmente.");
+                    } else {
+                        enviarMensaje(chatId, "🏁 Sesión de práctica terminada.");
+                        practicasActivas.remove(chatId);
+                        enviarMenuPrincipal(chatId);
+                    }
+                }
+            }
             return;
         }
 
-        // 2. NUEVA LÓGICA: Categorías para MODO PRÁCTICA
-        final String PRACTICA_CATEGORIA_PREFIX = "practica_cat_";
-        if (data.startsWith(PRACTICA_CATEGORIA_PREFIX)) {
-            String categoria = data.substring(PRACTICA_CATEGORIA_PREFIX.length());
-            iniciarPracticaPorCategoria(chatId, categoria);
+        // --- 2. SELECCIÓN DE CATEGORÍA (CREACIÓN DE PREGUNTAS) - NUEVO BLOQUE ---
+        if (data.startsWith("crear_preg_cat_")) {
+            String categoriaSeleccionada = data.substring("crear_preg_cat_".length());
+            EstadoCreacionPregunta estado = asistentes.get(chatId);
+
+            if (estado != null) {
+                // Guardamos la categoría y saltamos al Paso 1 (Pedir enunciado por teclado)
+                estado.setCategorias(Collections.singletonList(categoriaSeleccionada));
+                estado.setPaso(1);
+
+                enviarMensaje(chatId, "✅ Categoría *" + categoriaSeleccionada.toUpperCase() + "* seleccionada.\n\n" +
+                        "✍️ *PASO 2:* Escribe el **enunciado** de la pregunta:");
+            }
             return;
         }
 
-        // Procesar acciones del menú
+        // --- 3. SELECCIÓN DE RESPUESTA CORRECTA (CREACIÓN DE PREGUNTAS) ---
+        if (data.startsWith("crear_preg_res_")) {
+            int respuestaIdx = Integer.parseInt(data.substring("crear_preg_res_".length())) - 1;
+            EstadoCreacionPregunta estado = asistentes.get(chatId);
+
+            if (estado != null && estado.getPaso() == 3) {
+                estado.setCorrecta(respuestaIdx);
+
+                Pregunta nuevaPregunta = new Pregunta(estado.getTexto(), estado.getOpciones(), estado.getCorrecta());
+
+                for (String cat : estado.getCategorias()) {
+                    preguntaService.agregarPregunta(cat, nuevaPregunta);
+                }
+
+                asistentes.remove(chatId);
+                enviarMensaje(chatId, "✅ ¡Pregunta añadida con éxito a la categoría " + estado.getCategorias().get(0).toUpperCase() + "!");
+                enviarMenuPrincipal(chatId);
+            }
+            return;
+        }
+
+        // --- 4. RESPUESTAS DE EXAMEN ---
+        if (data.startsWith("res_examen_")) {
+            int opcionSeleccionada = Integer.parseInt(data.split("_")[2]) - 1;
+            Examen examen = examenesActivos.get(chatId);
+            if (examen != null) {
+                boolean acertada = examen.responderPregunta(opcionSeleccionada);
+                if (acertada) {
+                    enviarMensaje(chatId, "✅ *Correcto* (Guardado)");
+                } else {
+                    int correcta = examen.getPreguntaActual().getRespuestaCorrecta() + 1;
+                    enviarMensaje(chatId, "❌ *Incorrecto*\nLa respuesta correcta era la " + correcta);
+                }
+
+                examen.siguientePregunta();
+                if (examen.getIndiceActual() < examen.totalPreguntas()) {
+                    enviarPreguntaExamen(chatId, examen);
+                } else {
+                    finalizarYGuardarExamen(chatId, examen, "🏁 ¡Examen completado!");
+                }
+            }
+            return;
+        }
+
+        // --- 5. RESPUESTAS DE PRÁCTICA ---
+        if (data.startsWith("res_practica_")) {
+            int opcionSeleccionada = Integer.parseInt(data.split("_")[2]) - 1;
+            Examen practica = practicasActivas.get(chatId);
+            if (practica != null) {
+                boolean acertada = practica.responderPregunta(opcionSeleccionada);
+                if (acertada) {
+                    enviarMensaje(chatId, "✅ *¡Muy bien!*");
+                } else {
+                    int correcta = practica.getPreguntaActual().getRespuestaCorrecta() + 1;
+                    String textoCorrecto = practica.getPreguntaActual().getOpciones().get(correcta - 1);
+                    enviarMensaje(chatId, "❌ *Incorrecto*\nLa correcta es la " + correcta + ":\n_" + textoCorrecto + "_");
+                }
+
+                practica.siguientePregunta();
+                if (practica.getIndiceActual() < practica.totalPreguntas()) {
+                    enviarPreguntaPractica(chatId, practica);
+                } else {
+                    enviarMensaje(chatId, "🏁 Sesión de práctica terminada.");
+                    practicasActivas.remove(chatId);
+                    enviarMenuPrincipal(chatId);
+                }
+            }
+            return;
+        }
+
+        // --- 6. INICIO DE SESIONES POR CATEGORÍA ---
+        if (data.startsWith("examen_categoria_")) {
+            iniciarExamenFinal(chatId, data.substring("examen_categoria_".length()));
+            return;
+        }
+        if (data.startsWith("practica_cat_")) {
+            iniciarPracticaPorCategoria(chatId, data.substring("practica_cat_".length()));
+            return;
+        }
+
+        // --- 7. MENÚS PRINCIPALES Y ADMINISTRACIÓN ---
         switch (data) {
-            case "menu_cancelar":
-                enviarMensaje(chatId, "Has cerrado el bot. Escribe /start para arrancarlo.");
-                break;
             case "menu_practica":
                 mostrarCategoriasPractica(chatId);
                 break;
@@ -138,60 +244,99 @@ public class DrivingBot extends TelegramLongPollingBot {
                 mostrarCategoriasExamen(chatId);
                 break;
             case "menu_estadisticas":
-                if (esAdmin) mostrarEstadisticas(chatId);
-                else enviarMensaje(chatId, SOLO_ADMIN);
+                mostrarEstadisticas(chatId);
                 break;
-            case "menu_subir_json":
-                if (esAdmin) enviarMensaje(chatId, "📂 Envía ahora el archivo JSON de preguntas.");
-                else enviarMensaje(chatId, SOLO_ADMIN);
+            case "menu_stats_global":
+                if (esAdmin) {
+                    String statsGlobales = estadisticaService.generarEstadisticasGlobales();
+                    enviarMensaje(chatId, statsGlobales);
+                    enviarMenuPrincipal(chatId);
+                } else {
+                    enviarMensaje(chatId, "🚫 No tienes permisos para ver esto.");
+                }
                 break;
             case "menu_crear_pregunta":
                 if (esAdmin) {
                     asistentes.put(chatId, new EstadoCreacionPregunta());
-                    enviarMensaje(chatId, "Indica la categoría de la pregunta (ejemplo: camion,coche,moto):");
-                } else {
-                    enviarMensaje(chatId, SOLO_ADMIN);
+                    List<String> categorias = new ArrayList<>(preguntaService.getCategorias());
+
+                    if (categorias.isEmpty()) {
+                        enviarMensaje(chatId, "⚠️ No hay categorías base. Escribe la categoría manualmente:");
+                        // Aquí podrías poner el paso en 0 y esperar texto si no hay categorías
+                    } else {
+                        SendMessage mensaje = SendMessage.builder()
+                                .chatId(String.valueOf(chatId))
+                                .text("📂 *PASO 1:* Selecciona la categoría para la nueva pregunta:")
+                                .parseMode("Markdown")
+                                .build();
+
+                        List<List<InlineKeyboardButton>> filas = new ArrayList<>();
+                        for (String cat : categorias) {
+                            filas.add(Collections.singletonList(
+                                    InlineKeyboardButton.builder()
+                                            .text(cat.toUpperCase())
+                                            .callbackData("crear_preg_cat_" + cat)
+                                            .build()
+                            ));
+                        }
+                        mensaje.setReplyMarkup(new InlineKeyboardMarkup(filas));
+                        try {
+                            execute(mensaje);
+                        } catch (TelegramApiException e) { e.printStackTrace(); }
+                    }
                 }
                 break;
-            default:
-                enviarMensaje(chatId, "Opción no reconocida.");
+            case "menu_cancelar":
+                enviarMensaje(chatId, "Bot cerrado. Escribe /start para volver.");
+                break;
+            case "menu_subir_json":
+                if (esAdmin) {
+                    // Creamos un estado vacío o un marcador para saber que esperamos un archivo
+                    asistentes.put(chatId, new EstadoCreacionPregunta());
+                    enviarMensaje(chatId, "📁 Por favor, adjunta el archivo **.json** con las preguntas.\n\n" +
+                            "⚠️ Asegúrate de que el formato sea el correcto.");
+                }
                 break;
         }
     }
 
     private void manejarMensaje(Message message) {
         long chatId = message.getChatId();
-        // Crear usuario si no existe
-        @SuppressWarnings("null")
-        Usuario u = usuarioRepo.findById(String.valueOf(chatId)).orElse(null);
-        if (u == null) {
-            String nombre = message.getFrom() != null ? message.getFrom().getFirstName() : "Usuario";
-            u = new Usuario(String.valueOf(chatId), nombre, false);
-            usuarioRepo.save(u);
-        }
-        if (!message.hasText() && !message.hasDocument()) return;
         String texto = message.hasText() ? message.getText().trim() : "";
+
+        // 1. Registro de usuario (si no existe en la BD)
+        if (usuarioRepo.findById(String.valueOf(chatId)).isEmpty()) {
+            String nombre = message.getFrom() != null ? message.getFrom().getFirstName() : "Usuario";
+            usuarioRepo.save(new Usuario(String.valueOf(chatId), nombre, false));
+        }
+
+        // 2. Comandos globales y gestión de archivos
+        if (texto.equalsIgnoreCase("/start") || texto.equalsIgnoreCase("menu")) {
+            // Limpiamos cualquier estado activo al volver al inicio
+            examenesActivos.remove(chatId);
+            practicasActivas.remove(chatId);
+            asistentes.remove(chatId);
+            enviarMenuPrincipal(chatId);
+            return;
+        }
+
         if (message.hasDocument()) {
             manejarArchivo(chatId, message.getDocument());
             return;
         }
-        if (practicasActivas.containsKey(chatId)) {
-            procesarRespuestaPractica(chatId, texto);
-            return;
-        }
-        if (examenesActivos.containsKey(chatId)) {
-            procesarRespuestaExamen(chatId, texto);
-            return;
-        }
+
+        // 3. Procesamiento del Asistente de Creación
+        // Si el usuario está en medio de crear una pregunta, enviamos el texto al asistente
         if (asistentes.containsKey(chatId)) {
             manejarAsistente(chatId, texto);
-            return;
+            return; // IMPORTANTE: Finalizamos aquí para que el texto no active otras ramas
         }
-        if (texto.equalsIgnoreCase("/start") || texto.equalsIgnoreCase("menu")) {
-            enviarMenuPrincipal(chatId);
-            return;
+
+        // 4. Bloqueo de texto durante Exámenes o Prácticas
+        // Si hay una sesión activa de test, recordamos que deben usarse los botones inline
+        if (examenesActivos.containsKey(chatId) || practicasActivas.containsKey(chatId)) {
+            enviarMensaje(chatId, "⚠️ Por favor, utiliza los botones de la pregunta para responder.");
         }
-        enviarMenuPrincipal(chatId);
     }
 
     private void manejarArchivo(long chatId, Document document) {
@@ -246,20 +391,22 @@ public class DrivingBot extends TelegramLongPollingBot {
         if (msg.equalsIgnoreCase("salir")) {
             asistentes.remove(chatId);
             enviarMensaje(chatId, "✅ Asistente cancelado.");
+            enviarMenuPrincipal(chatId); // Añadido para no quedar bloqueado
             return;
         }
         if (estado == null) return;
-        switch (estado.paso) {
-            case 0:
-                manejarPasoCategorias(chatId, estado, msg);
-                break;
+
+        switch (estado.getPaso()) {
             case 1:
+                // Recibimos el TEXTO de la pregunta
                 manejarPasoTexto(chatId, estado, msg);
                 break;
             case 2:
-                manejarPasoOpciones(chatId, estado, msg);
+                // Recibimos las OPCIONES una por una (se llamará 3 veces)
+                manejarPasoOpcionesSecuencial(chatId, estado, msg);
                 break;
             case 3:
+                // Recibimos el ÍNDICE de la correcta
                 manejarPasoCorrecta(chatId, estado, msg);
                 break;
             default:
@@ -286,36 +433,94 @@ public class DrivingBot extends TelegramLongPollingBot {
 
     private void manejarPasoTexto(long chatId, EstadoCreacionPregunta estado, String msg) {
         estado.setTexto(msg);
-        estado.setPaso(estado.getPaso() + 1);
-        enviarMensaje(chatId, "Ingresa la opción 1:");
+        estado.setPaso(2);
+        estado.getOpciones().clear(); // Aseguramos que la lista esté vacía
+        enviarMensaje(chatId, "✍️ Texto guardado. Ahora, ingresa la **Opción 1**:");
+    }
+
+    private void manejarPasoOpcionesSecuencial(long chatId, EstadoCreacionPregunta estado, String msg) {
+        List<String> opciones = estado.getOpciones();
+        opciones.add(msg);
+
+        if (opciones.size() < 3) {
+            enviarMensaje(chatId, "✍️ Ingresa la **Opción " + (opciones.size() + 1) + "**:");
+        } else {
+            // Seteamos paso 3, pero no esperamos texto, sino un Callback
+            estado.setPaso(3);
+
+            SendMessage mensaje = new SendMessage();
+            mensaje.setChatId(String.valueOf(chatId));
+            mensaje.setParseMode("Markdown");
+
+            StringBuilder sb = new StringBuilder("✅ Opciones guardadas:\n");
+            for (int i = 0; i < opciones.size(); i++) {
+                sb.append(i + 1).append(". ").append(opciones.get(i)).append("\n");
+            }
+            sb.append("\n🔢 Por último, selecciona la **respuesta correcta**:");
+            mensaje.setText(sb.toString());
+
+            // Botones Inline 1, 2, 3
+            List<InlineKeyboardButton> filaBotones = new ArrayList<>();
+            for (int i = 1; i <= 3; i++) {
+                filaBotones.add(InlineKeyboardButton.builder()
+                        .text(String.valueOf(i))
+                        .callbackData("crear_preg_res_" + i)
+                        .build());
+            }
+            mensaje.setReplyMarkup(new InlineKeyboardMarkup(Collections.singletonList(filaBotones)));
+
+            try {
+                execute(mensaje);
+            } catch (TelegramApiException e) { e.printStackTrace(); }
+        }
     }
 
     private void manejarPasoOpciones(long chatId, EstadoCreacionPregunta estado, String msg) {
-        List<String> opciones = estado.getOpciones();
-        opciones.add(msg);
-        if (opciones.size() < 3) {
-            enviarMensaje(chatId, "Ingresa la opción " + (opciones.size() + 1) + ":");
-        } else {
-            estado.setPaso(estado.getPaso() + 1);
-            enviarMensaje(chatId, "Ingresa el índice (1-3) de la opción correcta:");
+        String[] partes = msg.split(",");
+        List<String> opciones = new ArrayList<>();
+
+        for (String p : partes) {
+            if (!p.trim().isEmpty()) opciones.add(p.trim());
         }
+
+        if (opciones.size() != 3) {
+            enviarMensaje(chatId, "⚠️ Debes introducir exactamente **3 opciones** separadas por comas.");
+            return;
+        }
+
+        estado.setOpciones(opciones);
+        estado.setPaso(3);
+
+        StringBuilder sb = new StringBuilder("✅ Opciones registradas:\n");
+        for (int i = 0; i < opciones.size(); i++) {
+            sb.append(i + 1).append(". ").append(opciones.get(i)).append("\n");
+        }
+        sb.append("\n🔢 Indica el número de la **respuesta correcta** (1, 2 o 3):");
+
+        enviarMensaje(chatId, sb.toString());
     }
 
     private void manejarPasoCorrecta(long chatId, EstadoCreacionPregunta estado, String msg) {
         try {
             int idx = Integer.parseInt(msg) - 1;
             if (idx < 0 || idx > 2) throw new NumberFormatException();
+
             estado.setCorrecta(idx);
+
+            // Construcción del objeto Pregunta
             Pregunta p = new Pregunta(estado.getTexto(), estado.getOpciones(), estado.getCorrecta());
+
+            // Guardado en todas las categorías seleccionadas (normalmente será una)
             for (String cat : estado.getCategorias()) {
                 preguntaService.agregarPregunta(cat, p);
             }
+
             asistentes.remove(chatId);
-            enviarMensaje(chatId, "✅ Pregunta agregada y guardada en el archivo JSON.");
-            // Volver a mostrar el menú principal automáticamente
+            enviarMensaje(chatId, "✅ ¡Pregunta añadida con éxito a la categoría " + estado.getCategorias().get(0).toUpperCase() + "!");
             enviarMenuPrincipal(chatId);
+
         } catch (NumberFormatException e) {
-            enviarMensaje(chatId, "Ingresa un índice válido (1, 2 o 3) o escribe 'salir'.");
+            enviarMensaje(chatId, "⚠️ Por favor, introduce un número válido (1, 2 o 3) o escribe 'salir'.");
         }
     }
 
@@ -349,20 +554,21 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("🧩 Pregunta práctica ").append(practica.getIndiceActual() + 1)
-                .append("/").append(practica.totalPreguntas()).append("\n\n");
-        sb.append(p.getTexto()).append("\n");
-        for (int i = 0; i < p.getOpciones().size(); i++) {
-            sb.append(i + 1).append(". ").append(p.getOpciones().get(i)).append("\n");
-        }
-        sb.append("\n👉 Para terminar la práctica, escribe o pulsa: **Fin**");
+        // Línea 1: Contador
+        sb.append("🧩 *Práctica ").append(practica.getIndiceActual() + 1)
+                .append("/").append(practica.totalPreguntas()).append("*\n");
+
+        // Línea 2: Instrucción de fin
+        sb.append("🏁 Para terminar, pulsa: *Fin*\n\n");
+
+        // Línea 3: Enunciado
+        sb.append("*").append(p.getTexto()).append("*");
 
         SendMessage mensaje = new SendMessage(String.valueOf(chatId), sb.toString());
         mensaje.setParseMode("Markdown");
 
-        // Usamos la factoría que ya creamos para el examen
-        // Como el teclado de examen ya tiene los números y el botón 'Fin', nos sirve perfectamente
-        mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoExamen(p.getOpciones().size()));
+        // Usamos el prefijo "practica"
+        mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoOpcionesInline(p.getOpciones(), "practica"));
 
         try {
             execute(mensaje);
@@ -372,67 +578,7 @@ public class DrivingBot extends TelegramLongPollingBot {
     }
 
 
-    private void procesarRespuestaPractica(long chatId, String mensaje) {
-        // 1. Recuperar la sesión de práctica actual
-        Examen practica = practicasActivas.get(chatId);
-        if (practica == null) return;
 
-        String msg = mensaje.trim();
-
-        // 2. CASO: El usuario decide terminar manualmente escribiendo o pulsando "Fin"
-        if (msg.equalsIgnoreCase("Fin")) {
-            int aciertos = practica.getAciertos();
-            int errores = practica.getErrores();
-            // Preguntas intentadas hasta el momento
-            int total = practica.getIndiceActual();
-
-            // Limpiamos la sesión
-            practicasActivas.remove(chatId);
-
-            // Enviamos resumen y volvemos al menú
-            enviarMensaje(chatId, "✅ *Práctica finalizada*\n\n" +
-                    "He finalizado tu sesión de estudio.\n" +
-                    "✔️ Aciertos: " + aciertos + "\n" +
-                    "❌ Errores: " + errores + "\n" +
-                    "Total contestadas: " + total);
-
-            enviarMenuPrincipal(chatId);
-            return;
-        }
-
-        // 3. CASO: El usuario responde a una pregunta (numérico)
-        try {
-            int opcion = Integer.parseInt(msg) - 1;
-
-            // Validar que la opción existe en la pregunta actual
-            Pregunta pActual = practica.getPreguntaActual();
-            if (pActual == null || opcion < 0 || opcion >= pActual.getOpciones().size()) {
-                enviarMensaje(chatId, "⚠️ Por favor, elige un número de opción válido o escribe 'Fin'.");
-                return;
-            }
-
-            // Registrar respuesta y dar feedback inmediato
-            boolean correcta = practica.responderPregunta(opcion);
-            if (correcta) {
-                enviarMensaje(chatId, "✅ *¡Correcto!*");
-            } else {
-                // Opcional: Mostrar cuál era la correcta
-                int indiceCorrecto = pActual.getRespuestaCorrecta() + 1;
-                enviarMensaje(chatId, "❌ *Incorrecto*\nLa respuesta correcta era la: " + indiceCorrecto);
-            }
-
-            // Avanzar a la siguiente pregunta
-            practica.siguientePregunta();
-
-            // Llamamos a enviarPreguntaPractica para mostrar la siguiente o terminar si era la última
-            enviarPreguntaPractica(chatId, practica);
-
-        } catch (NumberFormatException e) {
-            // Si el usuario escribe cualquier otra cosa que no sea número o "Fin"
-            enviarMensaje(chatId, "⌨️ Usa los botones del teclado o escribe el número de la respuesta.\n" +
-                    "Para salir, escribe 'Fin'.");
-        }
-    }
 
     // 3️⃣ mostrarCategoriasExamen: asegura callback correcto
     private void mostrarCategoriasExamen(long chatId) {
@@ -482,7 +628,7 @@ public class DrivingBot extends TelegramLongPollingBot {
             return;
         }
 
-        Examen examen = new Examen(preguntas);
+        Examen examen = new Examen(preguntas, categoria);
         examenesActivos.put(chatId, examen);
 
         // Programamos la tarea de finalización a los 40 minutos
@@ -504,19 +650,19 @@ public class DrivingBot extends TelegramLongPollingBot {
 
         // 1. Construcción del texto (Lógica de presentación)
         StringBuilder sb = new StringBuilder();
-        sb.append("Pregunta ").append(examen.getIndiceActual() + 1)
-                .append("/").append(examen.totalPreguntas()).append("\n\n");
-        sb.append(p.getTexto()).append("\n");
+        // Línea 1: Contador de preguntas
+        sb.append("📝 *Pregunta ").append(examen.getIndiceActual() + 1)
+                .append("/").append(examen.totalPreguntas()).append("*\n");
 
-        for (int i = 0; i < p.getOpciones().size(); i++) {
-            sb.append(i + 1).append(". ").append(p.getOpciones().get(i)).append("\n");
-        }
-
-
+        // Línea 2: Tiempo restante
         long minRestantes = examen.tiempoRestanteSegundos(DURACION_MINUTOS_EXAMEN) / 60;
-        sb.append("\n⏱ Tiempo restante: ").append(minRestantes).append(" minutos");
-        sb.append("\n👉 Para terminar el examen, pulsa: **Fin**");
-        //sb.append("\n👉 Para terminar el examen, pulsa: **Fin**");
+        sb.append("⏱ Tiempo restante: ").append(minRestantes).append(" minutos\n");
+
+        // Línea 3: Instrucción de fin
+        sb.append("🏁 Para terminar el examen, pulsa: *Fin*\n\n");
+
+        // Línea 4: Enunciado de la pregunta
+        sb.append("*").append(p.getTexto()).append("*");
 
         // 2. Configuración del mensaje
         SendMessage mensaje = new SendMessage();
@@ -525,8 +671,8 @@ public class DrivingBot extends TelegramLongPollingBot {
         // Para que las negritas funcionen
         mensaje.setParseMode("Markdown");
 
-        // 3. ASIGNAR EL TECLADO (Llamada a la Factoría)
-        mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoExamen(p.getOpciones().size()));
+        // Usamos el prefijo "examen"
+        mensaje.setReplyMarkup(BotKeyboardFactory.crearTecladoOpcionesInline(p.getOpciones(), "examen"));
 
         // 4. Envío
         try {
@@ -536,70 +682,23 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
     }
 
-
-    private void procesarRespuestaExamen(long chatId, String mensaje) {
-        Examen examen = examenesActivos.get(chatId);
-        if (examen == null) return;
-
-        String msg = mensaje.trim();
-
-        // Validar controles
-        if (msg.equalsIgnoreCase("Sig")) {
-            examen.siguientePregunta();
-            enviarPreguntaExamen(chatId, examen);
-            return;
-        }
-        if (msg.equalsIgnoreCase("Retr")) {
-            examen.setIndiceActual(Math.max(0, examen.getIndiceActual() - 1));
-            enviarPreguntaExamen(chatId, examen);
-            return;
-        }
-        if (msg.equalsIgnoreCase("Fin")) {
-            finalizarYGuardarExamen(chatId, examen, "Has decidido terminar el examen.");
-            return;
-        }
-
-        // Validar opciones numéricas
-        try {
-            int opcion = Integer.parseInt(msg) - 1;
-            if (opcion < 0 || opcion >= examen.getPreguntaActual().getOpciones().size()) {
-                enviarMensaje(chatId, "Opción inválida, selecciona un número válido o pulsa Sig, Retr o escribe 'Fin'.");
-                return;
-            }
-            examen.responderPregunta(opcion);
-            Boolean correcta = examen.getUltimaRespuestaCorrecta();
-            enviarMensaje(chatId, correcta != null && correcta ? "✅ Correcto" : "❌ Incorrecto");
-            examen.siguientePregunta();
-            enviarPreguntaExamen(chatId, examen);
-        } catch (NumberFormatException e) {
-            enviarMensaje(chatId, "Selecciona un número válido o pulsa Sig, Retr o escribe 'Fin'.");
-        }
-    }
-
     private void finalizarYGuardarExamen(long chatId, Examen examen, String motivo) {
-        // 1. Limpieza de mapas y cancelación de la tarea programada
         examenesActivos.remove(chatId);
-
         ScheduledFuture<?> tarea = tareasExamen.remove(chatId);
-        if (tarea != null) {
-            tarea.cancel(false);
-        }
+        if (tarea != null) tarea.cancel(false);
 
-        // 2. Cálculo de resultados
-        boolean aprobado = examen.aprobado(UMBRAL_APROBADO);
-        String resultado = aprobado
-                ? String.format("🎉 ¡ENHORABUENA! Has aprobado.\n✅ Aciertos: %d/%d", examen.getAciertos(), examen.totalPreguntas())
-                : String.format("❌ Has suspendido.\n⚠️ Aciertos: %d/%d", examen.getAciertos(), examen.totalPreguntas());
+        // Cálculo manual ya que Examen.java no tiene el metodo .aprobado()
+        int aciertos = examen.getAciertos();
+        boolean aprobado = aciertos >= UMBRAL_APROBADO;
 
-        // 3. ENVIAR LOS MENSAJES POR SEPARADO
-        // Primero enviamos el texto del motivo (ej: Tiempo agotado) y el resultado
+        String resultado = (aprobado ? "🎉 ¡APROBADO!" : "❌ SUSPENDIDO") +
+                "\n✅ Aciertos: " + aciertos + "/" + examen.totalPreguntas();
+
         enviarMensaje(chatId, motivo + "\n\n" + resultado);
 
-        // Luego enviamos el menú principal con su texto por defecto (el que ya tiene tu método)
-        enviarMenuPrincipal(chatId);
-
-        // 4. Guardar en Base de Datos
+        // Guardamos el resultado en la BD
         estadisticaService.guardarResultado(String.valueOf(chatId), examen, UMBRAL_APROBADO);
+        enviarMenuPrincipal(chatId);
     }
 
     //Estadisticas
@@ -660,7 +759,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
 
         Collections.shuffle(preguntas);
-        Examen practica = new Examen(preguntas);
+        Examen practica = new Examen(preguntas, categoria);
         practicasActivas.put(chatId, practica);
 
         enviarMensaje(chatId, "🚀 Iniciando práctica de: " + categoria.toUpperCase());

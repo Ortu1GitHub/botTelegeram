@@ -1,15 +1,9 @@
 package botTelegram.bot;
-
-import botTelegram.model.Pregunta;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public class BotKeyboardFactory {
 
@@ -29,6 +23,13 @@ public class BotKeyboardFactory {
                         .callbackData("menu_examen")
                         .build()
         ));
+        // Botón de estadísticas visible para TODOS
+        filas.add(Collections.singletonList(
+                InlineKeyboardButton.builder()
+                        .text("📊 Mis Estadísticas")
+                        .callbackData("menu_estadisticas")
+                        .build()
+        ));
         filas.add(Collections.singletonList(
                 InlineKeyboardButton.builder()
                         .text("🛑 Cerrar Bot")
@@ -39,8 +40,8 @@ public class BotKeyboardFactory {
         if (esAdmin) {
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
-                            .text("📊 Ver estadísticas")
-                            .callbackData("menu_estadisticas")
+                            .text("📊 Ver estadísticas TOTALES")
+                            .callbackData("menu_stats_global")
                             .build()
             ));
             filas.add(Collections.singletonList(
@@ -60,27 +61,28 @@ public class BotKeyboardFactory {
         return new InlineKeyboardMarkup(filas);
     }
 
-    // Se mantiene este porque es el que usas en enviarPreguntaExamen
-    public static ReplyKeyboardMarkup crearTecladoExamen(int numOpciones) {
-        ReplyKeyboardMarkup teclado = new ReplyKeyboardMarkup();
-        teclado.setResizeKeyboard(true);
-        teclado.setOneTimeKeyboard(false);
+    public static InlineKeyboardMarkup crearTecladoOpcionesInline(List<String> opciones, String tipo) {
+        List<List<InlineKeyboardButton>> filas = new ArrayList<>();
 
-        List<KeyboardRow> filas = new ArrayList<>();
+        for (int i = 0; i < opciones.size(); i++) {
+            // Ejemplo de callbackData: "res_examen_1" o "res_practica_1"
+            String callbackData = "res_" + tipo + "_" + (i + 1);
 
-        KeyboardRow filaOpciones = new KeyboardRow();
-        for (int i = 1; i <= numOpciones; i++) {
-            filaOpciones.add(String.valueOf(i));
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text(opciones.get(i))
+                            .callbackData(callbackData)
+                            .build()
+            ));
         }
-        filas.add(filaOpciones);
 
-        KeyboardRow filaControles = new KeyboardRow();
-        filaControles.add("Retr");
-        filaControles.add("Sig");
-        filaControles.add("Fin");
-        filas.add(filaControles);
+        // Fila de navegación: [ ⬅️ ] [ ➡️ ] [ 🏁 Fin ]
+        List<InlineKeyboardButton> filaControl = new ArrayList<>();
+        filaControl.add(InlineKeyboardButton.builder().text("⬅️").callbackData(tipo + "_nav_retro").build());
+        filaControl.add(InlineKeyboardButton.builder().text("➡️").callbackData(tipo + "_nav_sig").build());
+        filaControl.add(InlineKeyboardButton.builder().text("🏁 Fin").callbackData(tipo + "_nav_fin").build());
+        filas.add(filaControl);
 
-        teclado.setKeyboard(filas);
-        return teclado;
+        return new InlineKeyboardMarkup(filas);
     }
 }

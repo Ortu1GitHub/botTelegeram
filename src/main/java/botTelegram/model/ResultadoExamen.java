@@ -19,13 +19,15 @@ public class ResultadoExamen {
     private int totalPreguntas;
     private boolean aprobado;
     private LocalDateTime fecha;
+    private String categoria;
 
-    public ResultadoExamen(String usuarioId, int aciertos, int totalPreguntas, boolean aprobado) {
+    public ResultadoExamen(String usuarioId, int aciertos, int totalPreguntas, boolean aprobado, String categoria) {
         this.usuarioId = usuarioId;
         this.aciertos = aciertos;
         this.totalPreguntas = totalPreguntas;
         this.aprobado = aprobado;
         this.fecha = LocalDateTime.now();
+        this.categoria=categoria;
     }
 
     //Constructor vacio requerido por JPA

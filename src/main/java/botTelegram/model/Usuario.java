@@ -26,10 +26,15 @@ public class Usuario implements Serializable {
         this.admin = admin;
     }
 
-    public boolean isAdmin() { return admin; }
+    public boolean isAdmin() {
+        return this.admin;
+    }
 
     //Constructor vacio requerido por JPA
     public Usuario() {
     }
 
+    public String getNombre() {
+        return this.nombre;
+    }
 }

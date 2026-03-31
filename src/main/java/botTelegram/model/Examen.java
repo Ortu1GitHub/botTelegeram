@@ -10,13 +10,15 @@ public class Examen {
     private final Map<Integer, Integer> respuestasUsuario;
     private final Map<Integer, Boolean> respuestasCorrectas;
     private final LocalDateTime inicio;
+    private final String categoria;
 
-    public Examen(List<Pregunta> preguntas) {
+    public Examen(List<Pregunta> preguntas, String categoria) {
         this.preguntas = new ArrayList<>(preguntas);
         this.indiceActual = 0;
         this.respuestasUsuario = new HashMap<>();
         this.respuestasCorrectas = new HashMap<>();
         this.inicio = LocalDateTime.now();
+        this.categoria = categoria;
     }
 
     public Pregunta getPreguntaActual() {
@@ -67,12 +69,7 @@ public class Examen {
         return Math.max(restantes, 0);
     }
 
-    public boolean aprobado(int umbralAciertos) {
-        return getAciertos() >= umbralAciertos;
-    }
-
-
-    public Boolean getUltimaRespuestaCorrecta() {
-        return respuestasCorrectas.get(indiceActual);
+    public String getCategoria() {
+        return this.categoria;
     }
 }
