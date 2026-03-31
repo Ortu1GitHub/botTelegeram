@@ -731,7 +731,7 @@ public class DrivingBot extends TelegramLongPollingBot {
 
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));
-        mensaje.setText("🛒 Selecciona qué categoría quieres practicar:");
+        mensaje.setText("📝 Selecciona qué categoría quieres practicar:");
 
         List<List<InlineKeyboardButton>> filas = new ArrayList<>();
         for (String cat : categorias) {

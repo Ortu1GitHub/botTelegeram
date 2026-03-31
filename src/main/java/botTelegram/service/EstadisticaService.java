@@ -132,12 +132,24 @@ public class EstadisticaService {
         long total = todos.size();
         long aprobados = todos.stream().filter(ResultadoExamen::isAprobado).count();
         long suspensos = total - aprobados;
+        // --- NUEVA LÓGICA: Encontrar la categoría más examinada ---
+        String categoriaMasPopular = todos.stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.getCategoria() != null ? r.getCategoria().toUpperCase() : "GENERAL",
+                        Collectors.counting()
+                ))
+                .entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                // Aquí nos aseguramos de que el nombre de la categoría esté en mayúsculas
+                .map(entry -> entry.getKey().toUpperCase() + " (" + entry.getValue() + " exámenes)")
+                .orElse("NINGUNA");
 
         StringBuilder sb = new StringBuilder();
         sb.append("📊 **ESTADÍSTICAS GLOBALES DEL SISTEMA**\n");
         sb.append("--------------------------------------------\n");
         sb.append("✅ Total Aprobados: ").append(aprobados).append("\n");
         sb.append("❌ Total Suspensos: ").append(suspensos).append("\n");
+        sb.append("⭐ Categoría más popular: ").append(categoriaMasPopular).append("\n");
         sb.append("📈 Tasa de éxito: ").append(String.format("%.1f%%", ((double)aprobados/total)*100)).append("\n\n");
 
         sb.append("👥 **DESGLOSE POR USUARIO:**\n");
