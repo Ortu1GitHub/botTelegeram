@@ -146,23 +146,33 @@ public class EstadisticaService {
         long aprobados = todos.stream().filter(ResultadoExamen::isAprobado).count();
         long suspensos = total - aprobados;
         // --- NUEVA LÓGICA: Encontrar la categoría más examinada ---
-        String categoriaMasPopular = todos.stream()
+        // 1. Contamos cuántas veces aparece cada categoría
+        Map<String, Long> conteoCategorias = todos.stream()
                 .collect(Collectors.groupingBy(
-                        r -> r.getCategoria() != null ? r.getCategoria().toUpperCase() : "GENERAL",
+                        r -> r.getCategoria() != null ? r.getCategoria().replace("_", " ").toUpperCase() : "GENERAL",
                         Collectors.counting()
-                ))
-                .entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                // Aquí nos aseguramos de que el nombre de la categoría esté en mayúsculas
-                .map(entry -> entry.getKey().toUpperCase() + " (" + entry.getValue() + " exámenes)")
-                .orElse("NINGUNA");
+                ));
+
+        // 2. Encontramos el número máximo de apariciones
+        long maxApariciones = conteoCategorias.values().stream()
+                .max(Long::compare)
+                .orElse(0L);
+
+        // 3. Filtramos todas las categorías que tengan ese número máximo
+        String categoriasMasPopulares = conteoCategorias.entrySet().stream()
+                .filter(entry -> entry.getValue() == maxApariciones)
+                .map(entry -> entry.getKey() + " (" + entry.getValue() + ")")
+                .collect(Collectors.joining(", "));
+
+        // Si no hay datos, manejamos el valor por defecto
+        if (maxApariciones == 0) categoriasMasPopulares = "N/A";
 
         StringBuilder sb = new StringBuilder();
         sb.append("📊 sESTADÍSTICAS GLOBALES DEL SISTEMA\n");
         sb.append("--------------------------------------------\n");
         sb.append("✅ Total Aprobados: ").append(aprobados).append("\n");
         sb.append("❌ Total Suspensos: ").append(suspensos).append("\n");
-        sb.append("⭐ Categoría más popular: ").append(categoriaMasPopular).append("\n");
+        sb.append("⭐ Categoría más popular: ").append(categoriasMasPopulares).append("\n");
         sb.append("📈 Tasa de éxito: ").append(String.format("%.1f%%", ((double)aprobados/total)*100)).append("\n\n");
 
         sb.append("👥 DESGLOSE POR USUARIO:\n");
