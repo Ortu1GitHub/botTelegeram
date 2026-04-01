@@ -260,6 +260,10 @@
     "texto" : "¿ Que ?",
     "opciones" : [ "1", "2", "3" ],
     "respuestaCorrecta" : 2
+  }, {
+    "texto" : "¿ Donde estoy ?",
+    "opciones" : [ "Novelda", "Orihuela", "Alcoy" ],
+    "respuestaCorrecta" : 0
   } ],
   "moto" : [ {
     "texto" : "¿Cuál es la velocidad máxima para una motocicleta en autopista?",

@@ -6,12 +6,14 @@ import botTelegram.model.Pregunta;
 import botTelegram.model.Usuario;
 import botTelegram.repository.UsuarioRepository;
 import botTelegram.service.EstadisticaService;
+import botTelegram.service.ExportadorExcelService;
 import botTelegram.service.PreguntaServiceImple;
 import jakarta.annotation.Nonnull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -20,7 +22,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -43,6 +47,7 @@ public class DrivingBot extends TelegramLongPollingBot {
 
     private final PreguntaServiceImple preguntaService;
     private final EstadisticaService estadisticaService;
+    private final ExportadorExcelService exportadorService;
     private final UsuarioRepository usuarioRepo;
     private final Map<Long, EstadoCreacionPregunta> asistentes = new ConcurrentHashMap<>();
 
@@ -56,8 +61,6 @@ public class DrivingBot extends TelegramLongPollingBot {
     private static final int CANTIDAD_PREGUNTAS_EXAMEN = 30;
     private static final int UMBRAL_APROBADO = 26;
 
-    // Literales para evitar duplicados
-    private static final String SOLO_ADMIN = "❌ Solo los administradores pueden usar esta opción.";
     private static final String SOLO_JSON = "⚠️ Solo se permiten archivos con extensión .json";
     private static final String ARCHIVO_JSON_OK = "✅ Archivo JSON recibido y reemplazado con éxito.";
     private static final String ERROR_JSON = "❌ Error al procesar el archivo JSON.";
@@ -72,10 +75,11 @@ public class DrivingBot extends TelegramLongPollingBot {
 
     @SuppressWarnings("deprecation")
     public DrivingBot(PreguntaServiceImple preguntaService,
-                      EstadisticaService estadisticaService,
+                      EstadisticaService estadisticaService, ExportadorExcelService exportadorService,
                       UsuarioRepository usuarioRepo) {
         this.preguntaService = preguntaService;
         this.estadisticaService = estadisticaService;
+        this.exportadorService = exportadorService;
         this.usuarioRepo = usuarioRepo;
     }
 
@@ -95,7 +99,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         String data = update.getCallbackQuery().getData();
         long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-        // Notificar a Telegram que el callback ha sido recibido
         try {
             execute(new org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery(callbackQueryId));
         } catch (TelegramApiException e) {
@@ -103,7 +106,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
 
         Usuario u = usuarioRepo.findById(String.valueOf(chatId)).orElse(null);
-        // Corregido: usamos u.isAdmin() asumiendo que ya arreglaste el return false en la entidad Usuario
         boolean esAdmin = (u != null && u.isAdmin()) || String.valueOf(chatId).equals(adminIdConfigured);
 
         // --- 1. LÓGICA DE NAVEGACIÓN (FLECHAS Y FINALIZACIÓN) ---
@@ -210,7 +212,7 @@ public class DrivingBot extends TelegramLongPollingBot {
                 } else {
                     int correcta = practica.getPreguntaActual().getRespuestaCorrecta() + 1;
                     String textoCorrecto = practica.getPreguntaActual().getOpciones().get(correcta - 1);
-                    enviarMensaje(chatId, "❌ *Incorrecto*\nLa correcta es la " + correcta + ":\n_" + textoCorrecto + "_");
+                    enviarMensaje(chatId, "❌ *Incorrecto*\nLa correcta es la " + correcta + ":\n" + textoCorrecto + "");
                 }
 
                 practica.siguientePregunta();
@@ -262,7 +264,6 @@ public class DrivingBot extends TelegramLongPollingBot {
 
                     if (categorias.isEmpty()) {
                         enviarMensaje(chatId, "⚠️ No hay categorías base. Escribe la categoría manualmente:");
-                        // Aquí podrías poner el paso en 0 y esperar texto si no hay categorías
                     } else {
                         SendMessage mensaje = SendMessage.builder()
                                 .chatId(String.valueOf(chatId))
@@ -297,6 +298,27 @@ public class DrivingBot extends TelegramLongPollingBot {
                             "⚠️ Asegúrate de que el formato sea el correcto.");
                 }
                 break;
+
+            case "descargar_excel_personal":
+                try {
+                    ByteArrayInputStream bis = exportadorService.generarExcelEstadisticas(String.valueOf(chatId));
+                    enviarDocumento(chatId, bis, "Mis_Estadisticas.xlsx");
+                } catch (IOException e) {
+                    enviarMensaje(chatId, "❌ Error al generar el Excel.");
+                }
+            break;
+
+            case "exportar_global_admin":
+                if (esAdmin) {
+                    try {
+                        ByteArrayInputStream bis = exportadorService.generarExcelEstadisticas(null);
+                        enviarDocumento(chatId, bis, "Reporte_Global_Usuarios.xlsx");
+                    } catch (IOException e) {
+                        enviarMensaje(chatId, "❌ Error al generar reporte global.");
+                    }
+                }
+            break;
+
         }
     }
 
@@ -326,14 +348,12 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
 
         // 3. Procesamiento del Asistente de Creación
-        // Si el usuario está en medio de crear una pregunta, enviamos el texto al asistente
         if (asistentes.containsKey(chatId)) {
             manejarAsistente(chatId, texto);
-            return; // IMPORTANTE: Finalizamos aquí para que el texto no active otras ramas
+            return;
         }
 
         // 4. Bloqueo de texto durante Exámenes o Prácticas
-        // Si hay una sesión activa de test, recordamos que deben usarse los botones inline
         if (examenesActivos.containsKey(chatId) || practicasActivas.containsKey(chatId)) {
             enviarMensaje(chatId, "⚠️ Por favor, utiliza los botones de la pregunta para responder.");
         }
@@ -391,7 +411,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         if (msg.equalsIgnoreCase("salir")) {
             asistentes.remove(chatId);
             enviarMensaje(chatId, "✅ Asistente cancelado.");
-            enviarMenuPrincipal(chatId); // Añadido para no quedar bloqueado
+            enviarMenuPrincipal(chatId);
             return;
         }
         if (estado == null) return;
@@ -415,26 +435,10 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
     }
 
-    private void manejarPasoCategorias(long chatId, EstadoCreacionPregunta estado, String msg) {
-        List<String> categorias = new ArrayList<>();
-        String[] cats = msg.split(",");
-        for (String cat : cats) {
-            cat = cat.trim();
-            if (!cat.isEmpty()) categorias.add(cat);
-        }
-        if (categorias.isEmpty()) {
-            enviarMensaje(chatId, "Ingresa al menos una categoría válida o escribe 'salir'.");
-            return;
-        }
-        estado.setCategorias(categorias);
-        estado.setPaso(estado.getPaso() + 1);
-        enviarMensaje(chatId, "Ingresa el texto de la pregunta:");
-    }
-
     private void manejarPasoTexto(long chatId, EstadoCreacionPregunta estado, String msg) {
         estado.setTexto(msg);
         estado.setPaso(2);
-        estado.getOpciones().clear(); // Aseguramos que la lista esté vacía
+        estado.getOpciones().clear();
         enviarMensaje(chatId, "✍️ Texto guardado. Ahora, ingresa la **Opción 1**:");
     }
 
@@ -445,7 +449,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         if (opciones.size() < 3) {
             enviarMensaje(chatId, "✍️ Ingresa la **Opción " + (opciones.size() + 1) + "**:");
         } else {
-            // Seteamos paso 3, pero no esperamos texto, sino un Callback
             estado.setPaso(3);
 
             SendMessage mensaje = new SendMessage();
@@ -473,31 +476,6 @@ public class DrivingBot extends TelegramLongPollingBot {
                 execute(mensaje);
             } catch (TelegramApiException e) { e.printStackTrace(); }
         }
-    }
-
-    private void manejarPasoOpciones(long chatId, EstadoCreacionPregunta estado, String msg) {
-        String[] partes = msg.split(",");
-        List<String> opciones = new ArrayList<>();
-
-        for (String p : partes) {
-            if (!p.trim().isEmpty()) opciones.add(p.trim());
-        }
-
-        if (opciones.size() != 3) {
-            enviarMensaje(chatId, "⚠️ Debes introducir exactamente **3 opciones** separadas por comas.");
-            return;
-        }
-
-        estado.setOpciones(opciones);
-        estado.setPaso(3);
-
-        StringBuilder sb = new StringBuilder("✅ Opciones registradas:\n");
-        for (int i = 0; i < opciones.size(); i++) {
-            sb.append(i + 1).append(". ").append(opciones.get(i)).append("\n");
-        }
-        sb.append("\n🔢 Indica el número de la **respuesta correcta** (1, 2 o 3):");
-
-        enviarMensaje(chatId, sb.toString());
     }
 
     private void manejarPasoCorrecta(long chatId, EstadoCreacionPregunta estado, String msg) {
@@ -532,7 +510,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         // Configurar el mensaje
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));
-        mensaje.setText("👋 Bienvenido. Elige una opción:");
+        mensaje.setText("👋 ¡Bienvenido al DrivingBot! Elige una opción:");
 
         // Asignar teclado (Usando la Factoría)
         mensaje.setReplyMarkup(BotKeyboardFactory.crearMenuPrincipalInline(esAdmin));
@@ -577,10 +555,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         }
     }
 
-
-
-
-    // 3️⃣ mostrarCategoriasExamen: asegura callback correcto
     private void mostrarCategoriasExamen(long chatId) {
         List<String> categorias = new ArrayList<>(preguntaService.getCategorias());
         if (categorias.isEmpty()) {
@@ -615,7 +589,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         return preguntaService.getCategorias().contains(cat);
     }
 
-    // 4️⃣ iniciarExamenFinal: revisión compatibilidad con categorías
     private void iniciarExamenFinal(long chatId, String categoria) {
         if (!esCategoriaValida(categoria)) {
             enviarMensaje(chatId, "⚠️ La categoría seleccionada no es válida.");
@@ -668,7 +641,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));
         mensaje.setText(sb.toString());
-        // Para que las negritas funcionen
         mensaje.setParseMode("Markdown");
 
         // Usamos el prefijo "examen"
@@ -686,8 +658,6 @@ public class DrivingBot extends TelegramLongPollingBot {
         examenesActivos.remove(chatId);
         ScheduledFuture<?> tarea = tareasExamen.remove(chatId);
         if (tarea != null) tarea.cancel(false);
-
-        // Cálculo manual ya que Examen.java no tiene el metodo .aprobado()
         int aciertos = examen.getAciertos();
         boolean aprobado = aciertos >= UMBRAL_APROBADO;
 
@@ -696,18 +666,31 @@ public class DrivingBot extends TelegramLongPollingBot {
 
         enviarMensaje(chatId, motivo + "\n\n" + resultado);
 
-        // Guardamos el resultado en la BD
         estadisticaService.guardarResultado(String.valueOf(chatId), examen, UMBRAL_APROBADO);
         enviarMenuPrincipal(chatId);
     }
 
-    //Estadisticas
     private void mostrarEstadisticas(long chatId) {
         String chatIdStr = String.valueOf(chatId);
 
-        String mensaje = estadisticaService.generarEstadisticas(chatIdStr);
+        String reporte = estadisticaService.generarEstadisticas(chatIdStr);
+        // CREAMOS EL BOTÓN (esto es lo nuevo)
+        InlineKeyboardMarkup tecladoExcel = InlineKeyboardMarkup.builder()
+                .keyboardRow(Collections.singletonList(
+                        InlineKeyboardButton.builder()
+                                .text("📥 Descargar mi Excel")
+                                .callbackData("descargar_excel_personal")
+                                .build()
+                ))
+                .build();
 
-        enviarMensaje(chatId, mensaje);
+        SendMessage mensaje = new SendMessage();
+        mensaje.setChatId(String.valueOf(chatId));
+        mensaje.setText(reporte);
+        mensaje.setParseMode("Markdown");
+        mensaje.setReplyMarkup(tecladoExcel);
+
+        enviarMensaje(chatId, reporte);
         // Volver a mostrar el menú principal inmediatamente después
         enviarMenuPrincipal(chatId);
     }
@@ -766,6 +749,18 @@ public class DrivingBot extends TelegramLongPollingBot {
         enviarPreguntaPractica(chatId, practica);
     }
 
+    private void enviarDocumento(long chatId, ByteArrayInputStream stream, String nombreArchivo) {
+        SendDocument sd = new SendDocument();
+        sd.setChatId(String.valueOf(chatId));
+        sd.setDocument(new org.telegram.telegrambots.meta.api.objects.InputFile(stream, nombreArchivo));
+        sd.setCaption("✅ Aquí tienes tu reporte en formato Excel.");
+
+        try {
+            execute(sd);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public String getBotUsername() { return botUsername; }

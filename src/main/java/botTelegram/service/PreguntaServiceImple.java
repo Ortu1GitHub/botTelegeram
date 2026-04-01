@@ -46,7 +46,6 @@ public class PreguntaServiceImple {
             }
 
             // 2. Leemos el archivo y REEMPLAZAMOS el mapa actual (en lugar de hacer putAll)
-            // Esto elimina cualquier categoría antigua que ya no esté en el JSON
             Map<String, List<Pregunta>> nuevoMap = mapper.readValue(file,
                     new TypeReference<Map<String, List<Pregunta>>>() {});
 

@@ -12,7 +12,7 @@ import java.io.Serializable;
 public class Usuario implements Serializable {
     @Id
     @Column(name = "telegram_id", length = 50)
-    private String telegramId; // guardamos chatId como string
+    private String telegramId;
 
     @Column(name = "nombre")
     private String nombre;

@@ -23,17 +23,25 @@ public class BotKeyboardFactory {
                         .callbackData("menu_examen")
                         .build()
         ));
-        // Botón de estadísticas visible para TODOS
+        // Botón de estadísticas visible para no admin
+        if (!esAdmin) {
         filas.add(Collections.singletonList(
                 InlineKeyboardButton.builder()
                         .text("📊 Mis Estadísticas")
                         .callbackData("menu_estadisticas")
                         .build()
         ));
+        }
         filas.add(Collections.singletonList(
                 InlineKeyboardButton.builder()
                         .text("🛑 Cerrar Bot")
                         .callbackData("menu_cancelar")
+                        .build()
+        ));
+        filas.add(Collections.singletonList(
+                InlineKeyboardButton.builder()
+                        .text("📈 Exportar Mis Estadisticas")
+                        .callbackData("descargar_excel_personal")
                         .build()
         ));
 
@@ -54,6 +62,12 @@ public class BotKeyboardFactory {
                     InlineKeyboardButton.builder()
                             .text("➕ Crear pregunta")
                             .callbackData("menu_crear_pregunta")
+                            .build()
+            ));
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text("📈 Exportar Reporte Global")
+                            .callbackData("exportar_global_admin")
                             .build()
             ));
         }

@@ -14,7 +14,7 @@ public class ResultadoExamen {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String usuarioId; // chatId en String
+    private String usuarioId;
     private int aciertos;
     private int totalPreguntas;
     private boolean aprobado;

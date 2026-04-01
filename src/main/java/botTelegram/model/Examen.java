@@ -35,7 +35,6 @@ public class Examen {
         return correcta;
     }
 
-
     public void siguientePregunta() {
         indiceActual++;
     }
@@ -55,13 +54,6 @@ public class Examen {
     public int getIndiceActual() { return indiceActual; }
     public void setIndiceActual(int indice) { this.indiceActual = indice; }
     public int totalPreguntas() { return preguntas.size(); }
-
-    public long getSegundosTotalesRestantes(int duracionMinutos) {
-        long segundosTranscurridos = Duration.between(inicio, LocalDateTime.now()).getSeconds();
-        long segundosTotalesPermitidos = (long) duracionMinutos * 60;
-        long restantes = segundosTotalesPermitidos - segundosTranscurridos;
-        return Math.max(restantes, 0);
-    }
 
     public long tiempoRestanteSegundos(int duracionMinutos) {
         Duration duracion = Duration.between(inicio, LocalDateTime.now());

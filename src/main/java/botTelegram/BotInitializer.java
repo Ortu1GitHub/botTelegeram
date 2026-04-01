@@ -21,6 +21,7 @@ public class BotInitializer {
 
     @PostConstruct
     public void init() {
+        //Eliminar en PRO
         logger.debug("PRUEBA: Si ves esto, el modo DEBUG está activo");
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
