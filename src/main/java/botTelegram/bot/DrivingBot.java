@@ -303,6 +303,7 @@ public class DrivingBot extends TelegramLongPollingBot {
                 try {
                     ByteArrayInputStream bis = exportadorService.generarExcelEstadisticas(String.valueOf(chatId));
                     enviarDocumento(chatId, bis, "Mis_Estadisticas.xlsx");
+                    enviarMenuPrincipal(chatId);
                 } catch (IOException e) {
                     enviarMensaje(chatId, "❌ Error al generar el Excel.");
                 }
@@ -313,6 +314,7 @@ public class DrivingBot extends TelegramLongPollingBot {
                     try {
                         ByteArrayInputStream bis = exportadorService.generarExcelEstadisticas(null);
                         enviarDocumento(chatId, bis, "Reporte_Global_Usuarios.xlsx");
+                        enviarMenuPrincipal(chatId);
                     } catch (IOException e) {
                         enviarMensaje(chatId, "❌ Error al generar reporte global.");
                     }
