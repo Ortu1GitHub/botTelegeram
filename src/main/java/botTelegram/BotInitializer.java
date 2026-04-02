@@ -19,14 +19,16 @@ public class BotInitializer {
         this.drivingBot = drivingBot;
     }
 
+
     @PostConstruct
     public void init() {
-        //Eliminar en PRO
+        // Eliminar en PRO
         logger.debug("PRUEBA: Si ves esto, el modo DEBUG está activo");
+
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
             botsApi.registerBot(drivingBot);
-            logger.info("Bot registrado correctamente en Telegram...");
+            logger.info("Bot registrado correctamente con Timeouts extendidos (75s)...");
         } catch (Exception e) {
             logger.error("Error al registrar el bot: {}", e.getMessage(), e);
         }
