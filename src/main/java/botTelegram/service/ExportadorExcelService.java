@@ -5,9 +5,11 @@ import botTelegram.model.Usuario;
 import botTelegram.repository.ResultadoExamenRepository;
 import botTelegram.repository.UsuarioRepository;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Font;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.awt.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,9 +51,13 @@ public class ExportadorExcelService {
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
             // Cabeceras
+            // sheet.createRow devuelve un org.apache.poi.ss.usermodel.Row
             Row headerRow = sheet.createRow(0);
+
             String[] columnas = {"Fecha", "Usuario", "Categoría", "Aciertos", "Total", "Resultado"};
+
             for (int i = 0; i < columnas.length; i++) {
+                // headerRow.createCell devuelve un org.apache.poi.ss.usermodel.Cell
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(columnas[i]);
                 cell.setCellStyle(headerStyle);

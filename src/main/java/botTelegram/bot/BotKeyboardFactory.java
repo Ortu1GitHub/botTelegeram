@@ -7,8 +7,7 @@ import java.util.List;
 
 public class BotKeyboardFactory {
 
-    // Se mantiene este porque es el que usas en enviarMenuPrincipal
-    public static InlineKeyboardMarkup crearMenuPrincipalInline(boolean esAdmin) {
+    public static InlineKeyboardMarkup crearMenuPrincipalInline(boolean esAdmin, boolean esPremium) {
         List<List<InlineKeyboardButton>> filas = new ArrayList<>();
 
         filas.add(Collections.singletonList(
@@ -32,6 +31,15 @@ public class BotKeyboardFactory {
                         .build()
         ));
         }
+        // Botón Premium solo para usuarios que aún no lo son
+        if (!esAdmin && !esPremium) {
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text("⭐ Obtener Premium (100 Stars)")
+                            .callbackData("comprar_premium")
+                            .build()
+            ));
+        }
         filas.add(Collections.singletonList(
                 InlineKeyboardButton.builder()
                         .text("🛑 Cerrar Bot")
@@ -50,12 +58,6 @@ public class BotKeyboardFactory {
                     InlineKeyboardButton.builder()
                             .text("📊 Ver estadísticas TOTALES")
                             .callbackData("menu_stats_global")
-                            .build()
-            ));
-            filas.add(Collections.singletonList(
-                    InlineKeyboardButton.builder()
-                            .text("📂 Subir preguntas JSON")
-                            .callbackData("menu_subir_json")
                             .build()
             ));
             filas.add(Collections.singletonList(
@@ -91,6 +93,32 @@ public class BotKeyboardFactory {
         }
 
         // Fila de navegación: [ ⬅️ ] [ ➡️ ] [ 🏁 Fin ]
+        List<InlineKeyboardButton> filaControl = new ArrayList<>();
+        filaControl.add(InlineKeyboardButton.builder().text("⬅️").callbackData(tipo + "_nav_retro").build());
+        filaControl.add(InlineKeyboardButton.builder().text("➡️").callbackData(tipo + "_nav_sig").build());
+        filaControl.add(InlineKeyboardButton.builder().text("🏁 Fin").callbackData(tipo + "_nav_fin").build());
+        filas.add(filaControl);
+
+        return new InlineKeyboardMarkup(filas);
+    }
+
+    /**
+     * Teclado para una pregunta ya respondida: marca la opción elegida con ✅,
+     * todos los botones de respuesta apuntan a un callback inerte (_bloqueada).
+     */
+    public static InlineKeyboardMarkup crearTecladoRespondida(List<String> opciones, String tipo, int opcionElegida) {
+        List<List<InlineKeyboardButton>> filas = new ArrayList<>();
+
+        for (int i = 0; i < opciones.size(); i++) {
+            String texto = (i == opcionElegida) ? "✅ " + opciones.get(i) : opciones.get(i);
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text(texto)
+                            .callbackData(tipo + "_bloqueada")
+                            .build()
+            ));
+        }
+
         List<InlineKeyboardButton> filaControl = new ArrayList<>();
         filaControl.add(InlineKeyboardButton.builder().text("⬅️").callbackData(tipo + "_nav_retro").build());
         filaControl.add(InlineKeyboardButton.builder().text("➡️").callbackData(tipo + "_nav_sig").build());

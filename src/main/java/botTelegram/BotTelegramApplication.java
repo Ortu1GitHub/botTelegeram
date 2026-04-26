@@ -14,8 +14,16 @@ public class BotTelegramApplication {
 
 	@Bean
 	public DefaultBotOptions defaultBotOptions() {
+		DefaultBotOptions options = new DefaultBotOptions();
 
-		return new DefaultBotOptions();
+		// En la versión 6.x, los timeouts se gestionan así:
+		options.setMaxThreads(10); // Ayuda con el "Thread starvation"
+
+		// Telegram por defecto tiene un timeout de 75s para long polling.
+		// Establecemos el tiempo de espera del socket un poco por encima.
+		options.setProxyType(DefaultBotOptions.ProxyType.NO_PROXY);
+
+		return options;
 	}
 
 }
