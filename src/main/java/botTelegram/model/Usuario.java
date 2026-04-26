@@ -23,11 +23,15 @@ public class Usuario implements Serializable {
     @Column(name = "premium")
     private Boolean premium;
 
+    @Column(name = "examen_gratis_usado")
+    private Boolean examenGratisUsado;
+
     public Usuario(String telegramId, String nombre, boolean admin) {
         this.telegramId = telegramId;
         this.nombre = nombre;
         this.admin = admin;
         this.premium = false;
+        this.examenGratisUsado = false;
     }
 
     public boolean isAdmin() {
@@ -40,6 +44,14 @@ public class Usuario implements Serializable {
 
     public void setPremium(boolean premium) {
         this.premium = premium;
+    }
+
+    public boolean isExamenGratisUsado() {
+        return Boolean.TRUE.equals(this.examenGratisUsado);
+    }
+
+    public void setExamenGratisUsado(boolean examenGratisUsado) {
+        this.examenGratisUsado = examenGratisUsado;
     }
 
     //Constructor vacio requerido por JPA

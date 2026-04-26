@@ -303,10 +303,13 @@ public class DrivingBot extends TelegramLongPollingBot {
         switch (data) {
             case "menu_practica": mostrarCategoriasPractica(chatId); break;
             case "menu_examen":
-                if (esAdmin || (u != null && u.isPremium())) {
+                if (esAdmin || (u != null && u.isPremium()) || (u != null && !u.isExamenGratisUsado())) {
+                    if (!esAdmin && (u != null) && !u.isPremium() && !u.isExamenGratisUsado()) {
+                        enviarMensaje(chatId, "ℹ️ Tienes *1 examen gratuito* disponible. ¡Buena suerte!");
+                    }
                     mostrarCategoriasExamen(chatId);
                 } else {
-                    enviarMensaje(chatId, "⭐ El Modo Examen es exclusivo para usuarios *Premium*.\nPulsa *Obtener Premium* en el menú para acceder.");
+                    enviarMensaje(chatId, "⭐ Ya has usado tu examen gratuito. El Modo Examen es exclusivo para usuarios *Premium*.\nPulsa *Obtener Premium* en el menú para acceder.");
                     enviarMenuPrincipal(chatId);
                 }
                 break;
@@ -637,8 +640,10 @@ public class DrivingBot extends TelegramLongPollingBot {
     private void iniciarExamenFinal(long chatId, String categoria) {
         Usuario u = usuarioRepo.findById(String.valueOf(chatId)).orElse(null);
         boolean esAdmin = (u != null && u.isAdmin()) || String.valueOf(chatId).equals(adminIdConfigured);
-        if (!esAdmin && (u == null || !u.isPremium())) {
-            enviarMensaje(chatId, "⭐ El Modo Examen requiere Premium. Usa el menú para obtenerlo.");
+        boolean tienePremium = (u != null && u.isPremium());
+        boolean gratisDisponible = (u != null && !u.isExamenGratisUsado());
+        if (!esAdmin && !tienePremium && !gratisDisponible) {
+            enviarMensaje(chatId, "⭐ Ya has usado tu examen gratuito. El Modo Examen requiere Premium. Usa el menú para obtenerlo.");
             enviarMenuPrincipal(chatId);
             return;
         }
@@ -730,6 +735,15 @@ public class DrivingBot extends TelegramLongPollingBot {
         String resultado = (aprobado ? "🎉 ¡APROBADO!" : "❌ SUSPENDIDO") +
                 "\n✅ Aciertos: " + aciertos + "/" + examen.totalPreguntas();
 
+        // Marcar examen gratuito como usado si el usuario no es premium ni admin
+        boolean esAdmin = String.valueOf(chatId).equals(adminIdConfigured);
+        usuarioRepo.findById(String.valueOf(chatId)).ifPresent(u -> {
+            if (!u.isAdmin() && !esAdmin && !u.isPremium() && !u.isExamenGratisUsado()) {
+                u.setExamenGratisUsado(true);
+                usuarioRepo.save(u);
+            }
+        });
+
         enviarMensaje(chatId, motivo + "\n\n" + resultado);
 
         estadisticaService.guardarResultado(String.valueOf(chatId), examen, UMBRAL_APROBADO);
@@ -740,20 +754,11 @@ public class DrivingBot extends TelegramLongPollingBot {
         String chatIdStr = String.valueOf(chatId);
 
         String reporte = estadisticaService.generarEstadisticas(chatIdStr);
-        InlineKeyboardMarkup tecladoExcel = InlineKeyboardMarkup.builder()
-                .keyboardRow(Collections.singletonList(
-                        InlineKeyboardButton.builder()
-                                .text("📥 Descargar mi Excel")
-                                .callbackData("descargar_excel_personal")
-                                .build()
-                ))
-                .build();
 
         SendMessage mensaje = new SendMessage();
         mensaje.setChatId(String.valueOf(chatId));
         mensaje.setText(reporte);
         mensaje.setParseMode("Markdown");
-        mensaje.setReplyMarkup(tecladoExcel);
 
         try {
             execute(mensaje);
@@ -843,7 +848,7 @@ public class DrivingBot extends TelegramLongPollingBot {
         try {
             String body = "{\"chat_id\":" + chatId
                     + ",\"title\":\"DrivingBot Premium\""
-                    + ",\"description\":\"Acceso al Modo Examen: 30 preguntas, cron\\u00f3metro de 40 min, historial de resultados y exportaci\\u00f3n Excel.\""
+                    + ",\"description\":\"Acceda al Modo Examen: 30 preguntas, cron\\u00f3metro de 40 min, historial de resultados y exportaci\\u00f3n Excel para varios tipos de veh\\u00edculos\""
                     + ",\"payload\":\"premium_" + chatId + "\""
                     + ",\"provider_token\":\"\""
                     + ",\"currency\":\"XTR\""
