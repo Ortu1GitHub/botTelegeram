@@ -55,6 +55,12 @@ public class PreguntaServiceImple {
                 this.preguntasPorCategoria = new HashMap<>();
             }
 
+            // Asignar número secuencial a cada pregunta (global, empezando en 1)
+            int[] contador = {1};
+            this.preguntasPorCategoria.forEach((cat, lista) ->
+                lista.forEach(p -> p.setNumero(contador[0]++))
+            );
+
         } catch (Exception e) {
             // En caso de error crítico (archivo corrupto), evitamos que el bot deje de funcionar
             // inicializando un mapa vacío para evitar NullPointerExceptions

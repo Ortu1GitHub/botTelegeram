@@ -13,7 +13,8 @@ public class EstadoCreacionPregunta {
     private String texto;
     private List<String> opciones = new ArrayList<>();
     private Integer correcta;
-    // 0=categorias, 1=texto de la preguntas, 2-opciones, 3= respuesta correcta
+    private String imagenUrl;
+    // 0=categorias, 1=texto de la preguntas, 2-opciones, 3= respuesta correcta, 4=foto (opcional)
     public int paso = 0;
 
 }

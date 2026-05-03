@@ -139,62 +139,53 @@ public class EstadisticaService {
     }
 
     public String generarEstadisticasGlobales() {
-        List<ResultadoExamen> todos = repo.findAll();
-        if (todos.isEmpty()) return "General: No hay exámenes registrados aún.";
+        LocalDate hace30Dias = LocalDate.now().minusDays(30);
 
-        long total = todos.size();
-        long aprobados = todos.stream().filter(ResultadoExamen::isAprobado).count();
-        long suspensos = total - aprobados;
-        // --- NUEVA LÓGICA: Encontrar la categoría más examinada ---
-        // 1. Contamos cuántas veces aparece cada categoría
-        Map<String, Long> conteoCategorias = todos.stream()
+        // Exámenes de los últimos 30 días
+        List<ResultadoExamen> ultimos30 = repo.findAll().stream()
+                .filter(r -> !r.getFecha().toLocalDate().isBefore(hace30Dias))
+                .toList();
+
+        // 1. Usuarios activos: aquellos con MÁS de 1 examen en los últimos 30 días
+        Map<String, Long> examenesPorUsuario = ultimos30.stream()
+                .collect(Collectors.groupingBy(ResultadoExamen::getUsuarioId, Collectors.counting()));
+        long usuariosActivos = examenesPorUsuario.values().stream().filter(c -> c > 1).count();
+
+        // 2. Exámenes por categoría (aprobados/suspendidos) en los últimos 30 días
+        Map<String, List<ResultadoExamen>> porCategoria = ultimos30.stream()
                 .collect(Collectors.groupingBy(
-                        r -> r.getCategoria() != null ? r.getCategoria().replace("_", " ").toUpperCase() : "GENERAL",
-                        Collectors.counting()
+                        r -> r.getCategoria() != null ? r.getCategoria().toUpperCase() : "GENERAL"
                 ));
 
-        // 2. Encontramos el número máximo de apariciones
-        long maxApariciones = conteoCategorias.values().stream()
-                .max(Long::compare)
-                .orElse(0L);
-
-        // 3. Filtramos todas las categorías que tengan ese número máximo
-        String categoriasMasPopulares = conteoCategorias.entrySet().stream()
-                .filter(entry -> entry.getValue() == maxApariciones)
-                .map(entry -> entry.getKey() + " (" + entry.getValue() + ")")
-                .collect(Collectors.joining(", "));
-
-        // Si no hay datos, manejamos el valor por defecto
-        if (maxApariciones == 0) categoriasMasPopulares = "N/A";
+        // 3. Usuarios Premium
+        long usuariosPremium = usuarioRepo.findAll().stream()
+                .filter(Usuario::isPremium)
+                .count();
 
         StringBuilder sb = new StringBuilder();
-        sb.append("📊 sESTADÍSTICAS GLOBALES DEL SISTEMA\n");
-        sb.append("--------------------------------------------\n");
-        sb.append("✅ Total Aprobados: ").append(aprobados).append("\n");
-        sb.append("❌ Total Suspensos: ").append(suspensos).append("\n");
-        sb.append("⭐ Categoría más popular: ").append(categoriasMasPopulares).append("\n");
-        sb.append("📈 Tasa de éxito: ").append(String.format("%.1f%%", ((double)aprobados/total)*100)).append("\n\n");
+        sb.append("📊 *ESTADÍSTICAS GLOBALES* _(últimos 30 días)_\n");
+        sb.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
 
-        sb.append("👥 DESGLOSE POR USUARIO:\n");
+        sb.append("👥 *Usuarios activos* (>1 examen): ").append(usuariosActivos).append("\n");
+        sb.append("⭐ *Usuarios Premium*: ").append(usuariosPremium).append("\n\n");
 
-        // Agrupamos: Usuario -> Categoría -> Lista de resultados
-        Map<String, Map<String, List<ResultadoExamen>>> agrupado = todos.stream()
-                .collect(Collectors.groupingBy(
-                        r -> {
-                            Usuario usu = usuarioRepo.findById(r.getUsuarioId()).orElse(null);
-                            return (usu != null) ? usu.getNombre() : "ID: " + r.getUsuarioId();
-                        },
-                        Collectors.groupingBy(r -> r.getCategoria() != null ? r.getCategoria().toUpperCase() : "GENERAL")
-                ));
-
-        agrupado.forEach((nombre, categorias) -> {
-            sb.append("\n👤 ").append(nombre).append("*\n");
-            categorias.forEach((cat, examenes) -> {
-                long ap = examenes.stream().filter(ResultadoExamen::isAprobado).count();
-                long sus = examenes.size() - ap;
-                sb.append("   • ").append(cat).append(": ").append(ap).append("✅ / ").append(sus).append("❌\n");
-            });
-        });
+        sb.append("📚 *Exámenes por categoría:*\n");
+        if (porCategoria.isEmpty()) {
+            sb.append("   _Sin exámenes registrados en este período._\n");
+        } else {
+            porCategoria.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> {
+                        String cat = entry.getKey();
+                        List<ResultadoExamen> lista = entry.getValue();
+                        long aprobados = lista.stream().filter(ResultadoExamen::isAprobado).count();
+                        long suspendidos = lista.size() - aprobados;
+                        sb.append("   • *").append(cat).append("*: ")
+                          .append(lista.size()).append(" total  |  ")
+                          .append(aprobados).append("✅  ")
+                          .append(suspendidos).append("❌\n");
+                    });
+        }
 
         return sb.toString();
     }

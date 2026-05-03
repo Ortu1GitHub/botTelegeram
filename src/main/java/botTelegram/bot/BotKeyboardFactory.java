@@ -68,10 +68,11 @@ public class BotKeyboardFactory {
             ));
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
-                            .text("📈 Exportar Reporte Global")
-                            .callbackData("exportar_global_admin")
+                            .text("� Subir preguntas JSON")
+                            .callbackData("menu_subir_json")
                             .build()
             ));
+
         }
 
         return new InlineKeyboardMarkup(filas);

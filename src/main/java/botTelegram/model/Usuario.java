@@ -61,4 +61,8 @@ public class Usuario implements Serializable {
     public String getNombre() {
         return this.nombre;
     }
+
+    public String getTelegramId() {
+        return this.telegramId;
+    }
 }
