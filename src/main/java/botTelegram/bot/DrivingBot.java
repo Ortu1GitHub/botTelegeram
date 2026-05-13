@@ -357,6 +357,11 @@ public class DrivingBot extends TelegramLongPollingBot {
             case "descargar_excel_personal":
                 descargarExcel(chatId, String.valueOf(chatId));
                 break;
+            case "descargar_excel_global":
+                if (esAdmin) {
+                    descargarExcel(chatId, null);
+                }
+                break;
             case "menu_cancelar":
                 enviarMensaje(chatId, "Bot cerrado. Escribe /start para volver.");
                 break;

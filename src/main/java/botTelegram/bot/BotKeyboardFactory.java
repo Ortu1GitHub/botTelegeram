@@ -46,12 +46,14 @@ public class BotKeyboardFactory {
                         .callbackData("menu_cancelar")
                         .build()
         ));
-        filas.add(Collections.singletonList(
-                InlineKeyboardButton.builder()
-                        .text("📈 Exportar Mis Estadisticas")
-                        .callbackData("descargar_excel_personal")
-                        .build()
-        ));
+        if (!esAdmin) {
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
+                            .text("📈 Exportar Mis Estadisticas")
+                            .callbackData("descargar_excel_personal")
+                            .build()
+            ));
+        }
 
         if (esAdmin) {
             filas.add(Collections.singletonList(
@@ -62,13 +64,19 @@ public class BotKeyboardFactory {
             ));
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
+                            .text("📥 Exportar estadísticas globales")
+                            .callbackData("descargar_excel_global")
+                            .build()
+            ));
+            filas.add(Collections.singletonList(
+                    InlineKeyboardButton.builder()
                             .text("➕ Crear pregunta")
                             .callbackData("menu_crear_pregunta")
                             .build()
             ));
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
-                            .text("� Subir preguntas JSON")
+                            .text("📤 Subir preguntas JSON")
                             .callbackData("menu_subir_json")
                             .build()
             ));
