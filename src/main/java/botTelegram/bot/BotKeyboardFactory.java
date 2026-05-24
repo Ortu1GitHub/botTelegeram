@@ -35,7 +35,7 @@ public class BotKeyboardFactory {
         if (!esAdmin && !esPremium) {
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
-                            .text("⭐ Obtener Premium (100 Stars)")
+                            .text("⭐ Obtener Premium (5 Stars)")
                             .callbackData("comprar_premium")
                             .build()
             ));
@@ -64,7 +64,7 @@ public class BotKeyboardFactory {
             ));
             filas.add(Collections.singletonList(
                     InlineKeyboardButton.builder()
-                            .text("📥 Exportar estadísticas globales")
+                            .text("📈 Exportar estadísticas globales")
                             .callbackData("descargar_excel_global")
                             .build()
             ));

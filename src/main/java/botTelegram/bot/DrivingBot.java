@@ -619,7 +619,11 @@ public class DrivingBot extends TelegramLongPollingBot {
         try {
             execute(mensaje);
         } catch (TelegramApiException e) {
-            e.printStackTrace();
+            if (e.getMessage() != null && e.getMessage().contains("403")) {
+                System.out.println("El usuario con ID " + chatId + " ha bloqueado al bot. Vuelva a arrancarlo...");
+            } else {
+                e.printStackTrace();
+            }
         }
     }
 
